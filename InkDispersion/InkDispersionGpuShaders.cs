@@ -146,12 +146,15 @@ internal readonly partial struct MaskHashShader(
 [ThreadGroupSize(DefaultThreadGroupSizes.XY)]
 [GeneratedComputeShaderDescriptor]
 internal readonly partial struct InitFieldShader(
-    ReadWriteBuffer<float> distributions,
+    ReadWriteBuffer<float> distributionsA,
+    ReadWriteBuffer<float> distributionsB,
     ReadWriteBuffer<float> deposit,
     ReadWriteBuffer<float> surface,
-    ReadWriteBuffer<float> flowPigment,
+    ReadWriteBuffer<float> flowPigmentA,
+    ReadWriteBuffer<float> flowPigmentB,
     ReadWriteBuffer<float> fixedPigment,
-    ReadWriteBuffer<float> density,
+    ReadWriteBuffer<float> densityA,
+    ReadWriteBuffer<float> densityB,
     ReadWriteBuffer<float> wetness,
     ReadWriteBuffer<Float2> velocity,
     ReadWriteBuffer<int> inkStep,
@@ -159,12 +162,15 @@ internal readonly partial struct InitFieldShader(
     int gridHeight,
     float depositScale) : IComputeShader
 {
-    private readonly ReadWriteBuffer<float> distributions = distributions;
+    private readonly ReadWriteBuffer<float> distributionsA = distributionsA;
+    private readonly ReadWriteBuffer<float> distributionsB = distributionsB;
     private readonly ReadWriteBuffer<float> deposit = deposit;
     private readonly ReadWriteBuffer<float> surface = surface;
-    private readonly ReadWriteBuffer<float> flowPigment = flowPigment;
+    private readonly ReadWriteBuffer<float> flowPigmentA = flowPigmentA;
+    private readonly ReadWriteBuffer<float> flowPigmentB = flowPigmentB;
     private readonly ReadWriteBuffer<float> fixedPigment = fixedPigment;
-    private readonly ReadWriteBuffer<float> density = density;
+    private readonly ReadWriteBuffer<float> densityA = densityA;
+    private readonly ReadWriteBuffer<float> densityB = densityB;
     private readonly ReadWriteBuffer<float> wetness = wetness;
     private readonly ReadWriteBuffer<Float2> velocity = velocity;
     private readonly ReadWriteBuffer<int> inkStep = inkStep;
@@ -182,11 +188,16 @@ internal readonly partial struct InitFieldShader(
         var index = gy * gridWidth + gx;
         var gridLength = gridWidth * gridHeight;
         for (var i = 0; i < 9; i++)
-            distributions[i * gridLength + index] = 0f;
+        {
+            distributionsA[i * gridLength + index] = 0f;
+            distributionsB[i * gridLength + index] = 0f;
+        }
         surface[index] = deposit[index] * depositScale;
-        flowPigment[index] = 0f;
+        flowPigmentA[index] = 0f;
+        flowPigmentB[index] = 0f;
         fixedPigment[index] = 0f;
-        density[index] = 0f;
+        densityA[index] = 0f;
+        densityB[index] = 0f;
         wetness[index] = 0f;
         velocity[index] = new Float2(0f, 0f);
         inkStep[index] = InkDispersionSettings.BirthSentinel;
@@ -272,6 +283,7 @@ internal readonly partial struct JumpFloodPassShader(
 internal readonly partial struct ReachMaskShader(
     ReadWriteBuffer<int> jumpFlood,
     ReadWriteBuffer<int> reachMask,
+    ReadWriteBuffer<float> kappa,
     int gridWidth,
     int gridHeight,
     float cellSize,
@@ -279,6 +291,7 @@ internal readonly partial struct ReachMaskShader(
 {
     private readonly ReadWriteBuffer<int> jumpFlood = jumpFlood;
     private readonly ReadWriteBuffer<int> reachMask = reachMask;
+    private readonly ReadWriteBuffer<float> kappa = kappa;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
     private readonly float cellSize = cellSize;
@@ -293,14 +306,16 @@ internal readonly partial struct ReachMaskShader(
 
         var index = y * gridWidth + x;
         var seed = jumpFlood[index];
-        if (seed < 0)
+        var inside = 0;
+        if (seed >= 0)
         {
-            reachMask[index] = 0;
-            return;
+            var deltaX = (x - seed % gridWidth) * cellSize;
+            var deltaY = (y - seed / gridWidth) * cellSize;
+            inside = deltaX * deltaX + deltaY * deltaY <= reachPixels * reachPixels ? 1 : 0;
         }
-        var deltaX = (x - seed % gridWidth) * cellSize;
-        var deltaY = (y - seed / gridWidth) * cellSize;
-        reachMask[index] = deltaX * deltaX + deltaY * deltaY <= reachPixels * reachPixels ? 1 : 0;
+        reachMask[index] = inside;
+        if (inside == 0)
+            kappa[index] = 1f;
     }
 }
 
@@ -311,6 +326,8 @@ internal readonly partial struct SupplyShader(
     ReadWriteBuffer<float> surface,
     ReadWriteBuffer<float> flowPigment,
     ReadWriteBuffer<float> density,
+    ReadWriteBuffer<int> reachMask,
+    ReadWriteBuffer<float> deposit,
     int gridWidth,
     int gridHeight) : IComputeShader
 {
@@ -318,6 +335,8 @@ internal readonly partial struct SupplyShader(
     private readonly ReadWriteBuffer<float> surface = surface;
     private readonly ReadWriteBuffer<float> flowPigment = flowPigment;
     private readonly ReadWriteBuffer<float> density = density;
+    private readonly ReadWriteBuffer<int> reachMask = reachMask;
+    private readonly ReadWriteBuffer<float> deposit = deposit;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
 
@@ -329,6 +348,8 @@ internal readonly partial struct SupplyShader(
             return;
 
         var index = gy * gridWidth + gx;
+        if (reachMask[index] == 0 && deposit[index] == 0f)
+            return;
         var gridLength = gridWidth * gridHeight;
         var rho = 0f;
         for (var i = 0; i < 9; i++)
@@ -384,10 +405,7 @@ internal readonly partial struct KappaShader(
 
         var index = gy * gridWidth + gx;
         if (reachMask[index] == 0)
-        {
-            kappa[index] = 1f;
             return;
-        }
 
         if (density[index] <= InkDispersionSettings.WetEpsilon)
         {
@@ -431,6 +449,7 @@ internal readonly partial struct StreamCollideShader(
     ReadWriteBuffer<float> distributionsOut,
     ReadWriteBuffer<float> kappa,
     ReadWriteBuffer<int> reachMask,
+    ReadWriteBuffer<float> deposit,
     ReadWriteBuffer<float> densityOut,
     ReadWriteBuffer<Float2> velocity,
     int gridWidth,
@@ -442,6 +461,7 @@ internal readonly partial struct StreamCollideShader(
     private readonly ReadWriteBuffer<float> distributionsOut = distributionsOut;
     private readonly ReadWriteBuffer<float> kappa = kappa;
     private readonly ReadWriteBuffer<int> reachMask = reachMask;
+    private readonly ReadWriteBuffer<float> deposit = deposit;
     private readonly ReadWriteBuffer<float> densityOut = densityOut;
     private readonly ReadWriteBuffer<Float2> velocity = velocity;
     private readonly int gridWidth = gridWidth;
@@ -460,6 +480,8 @@ internal readonly partial struct StreamCollideShader(
         var gridLength = gridWidth * gridHeight;
         if (reachMask[index] == 0)
         {
+            if (deposit[index] == 0f)
+                return;
             for (var i = 0; i < 9; i++)
                 distributionsOut[i * gridLength + index] = 0f;
             densityOut[index] = 0f;
@@ -559,6 +581,7 @@ internal readonly partial struct PigmentShader(
     ReadWriteBuffer<float> wetness,
     ReadWriteBuffer<int> inkStep,
     ReadWriteBuffer<int> reachMask,
+    ReadWriteBuffer<float> deposit,
     ReadWriteBuffer<int> scratch,
     int gridWidth,
     int gridHeight,
@@ -577,6 +600,7 @@ internal readonly partial struct PigmentShader(
     private readonly ReadWriteBuffer<float> wetness = wetness;
     private readonly ReadWriteBuffer<int> inkStep = inkStep;
     private readonly ReadWriteBuffer<int> reachMask = reachMask;
+    private readonly ReadWriteBuffer<float> deposit = deposit;
     private readonly ReadWriteBuffer<int> scratch = scratch;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
@@ -595,7 +619,8 @@ internal readonly partial struct PigmentShader(
         var index = gy * gridWidth + gx;
         if (reachMask[index] == 0)
         {
-            flowPigmentOut[index] = 0f;
+            if (deposit[index] != 0f)
+                flowPigmentOut[index] = 0f;
             return;
         }
 

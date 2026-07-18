@@ -256,13 +256,17 @@ internal sealed class InkDispersionPipeline : IDisposable
         context.For(1, new InitScratchShader(_scratch));
         context.Barrier(_scratch);
         context.For(gridWidth, gridHeight, new InitFieldShader(
-            _distributionsA!, _deposit!, _surface!, _flowPigmentA!, _fixedPigment!, _densityA!, _wetness!, _velocity!, _inkStep!,
+            _distributionsA!, _distributionsB!, _deposit!, _surface!, _flowPigmentA!, _flowPigmentB!, _fixedPigment!,
+            _densityA!, _densityB!, _wetness!, _velocity!, _inkStep!,
             gridWidth, gridHeight, derived.Deposit));
         context.Barrier(_distributionsA!);
+        context.Barrier(_distributionsB!);
         context.Barrier(_surface!);
         context.Barrier(_flowPigmentA!);
+        context.Barrier(_flowPigmentB!);
         context.Barrier(_fixedPigment!);
         context.Barrier(_densityA!);
+        context.Barrier(_densityB!);
         context.Barrier(_wetness!);
         context.Barrier(_velocity!);
         context.Barrier(_inkStep!);
@@ -283,8 +287,9 @@ internal sealed class InkDispersionPipeline : IDisposable
             (reading, writing) = (writing, reading);
             stepSize >>= 1;
         }
-        context.For(gridWidth, gridHeight, new ReachMaskShader(reading, _reachMask!, gridWidth, gridHeight, derived.CellSize, derived.ReachPixels));
+        context.For(gridWidth, gridHeight, new ReachMaskShader(reading, _reachMask!, _kappa!, gridWidth, gridHeight, derived.CellSize, derived.ReachPixels));
         context.Barrier(_reachMask!);
+        context.Barrier(_kappa!);
 
         var distributionsIn = _distributionsA!;
         var distributionsOut = _distributionsB!;
@@ -293,7 +298,7 @@ internal sealed class InkDispersionPipeline : IDisposable
         for (var step = 0; step < derived.Steps; step++)
         {
             context.For(gridWidth, gridHeight, new SupplyShader(
-                distributionsIn, _surface!, pigmentIn, _densityA!, gridWidth, gridHeight));
+                distributionsIn, _surface!, pigmentIn, _densityA!, _reachMask!, _deposit!, gridWidth, gridHeight));
             context.Barrier(distributionsIn);
             context.Barrier(_surface!);
             context.Barrier(pigmentIn);
@@ -303,14 +308,14 @@ internal sealed class InkDispersionPipeline : IDisposable
                 parameters.Seed, derived.Fiber, derived.Sizing, derived.Viscosity, derived.Sigma));
             context.Barrier(_kappa!);
             context.For(gridWidth, gridHeight, new StreamCollideShader(
-                distributionsIn, distributionsOut, _kappa!, _reachMask!, _densityB!, _velocity!,
+                distributionsIn, distributionsOut, _kappa!, _reachMask!, _deposit!, _densityB!, _velocity!,
                 gridWidth, gridHeight, derived.Omega, derived.SurfaceEvaporation));
             context.Barrier(distributionsOut);
             context.Barrier(_densityB!);
             context.Barrier(_velocity!);
             context.For(gridWidth, gridHeight, new PigmentShader(
                 distributionsOut, _densityA!, _densityB!, _velocity!, pigmentIn, pigmentOut,
-                _fixedPigment!, _wetness!, _inkStep!, _reachMask!, _scratch,
+                _fixedPigment!, _wetness!, _inkStep!, _reachMask!, _deposit!, _scratch,
                 gridWidth, gridHeight, step, parameters.Seed, derived.Fiber, derived.Viscosity));
             context.Barrier(pigmentOut);
             context.Barrier(_fixedPigment!);
