@@ -1,0 +1,41 @@
+Key,Parameter,ja-jp,en-us,zh-cn,zh-tw,ko-kr,es-es,ar-sa,id-id
+InkDispersion,,墨拡散,Ink Dispersion,墨扩散,墨擴散,먹 번짐,Dispersión de tinta,انتشار الحبر,Dispersi Tinta
+BasicGroup,,基本,Basic,基本,基本,기본,Básico,أساسي,Dasar
+FlowGroup,,浸透,Flow,渗透,滲透,침투,Flujo,التدفق,Aliran
+AppearanceGroup,,描画,Appearance,绘制,繪製,묘화,Apariencia,المظهر,Tampilan
+Amount,,強さ,Amount,强度,強度,강도,Intensidad,الشدة,Intensitas
+AmountDescription,,墨の合成量です,Blend amount of the ink over the source,墨与源图像的混合量,墨與源圖像的混合量,먹의 합성량입니다,Cantidad de mezcla de la tinta sobre la imagen,مقدار مزج الحبر فوق الصورة,Jumlah pencampuran tinta di atas citra
+Spread,,拡散度,Spread,扩散度,擴散度,확산도,Difusión,درجة الانتشار,Penyebaran
+SpreadDescription,,にじみの進行度です。素材から墨がにじみ広がっていきます,Progress of the dispersion. The ink bleeds outward from the source,渗化的进行程度。墨从素材向外渗开,滲化的進行程度。墨從素材向外滲開,번짐의 진행도입니다. 소재에서 먹이 번져 나갑니다,Progreso de la dispersión. La tinta se extiende desde la imagen,مدى تقدم الانتشار. يتسرب الحبر من الصورة نحو الخارج,Kemajuan dispersi. Tinta merembes keluar dari sumber
+Quality,,品質,Quality,品质,品質,품질,Calidad,الجودة,Kualitas
+QualityDescription,,浸透格子の解像度と浸透ステップ数を選びます,Selects the flow lattice resolution and step counts,选择渗透网格分辨率与步数,選擇滲透網格解析度與步數,침투 격자 해상도와 스텝 수를 선택합니다,Selecciona la resolución de la retícula de flujo y el número de pasos,يحدد دقة شبكة التدفق وعدد الخطوات,Memilih resolusi kisi aliran dan jumlah langkah
+Water,,水量,Water,水量,水量,수량,Agua,كمية الماء,Air
+WaterDescription,,素材に置く水の量です。多いほど遠くまでにじみます,Amount of water deposited on the source. More water bleeds farther,置于素材上的水量。越多渗得越远,置於素材上的水量。越多滲得越遠,소재에 놓는 물의 양입니다. 많을수록 멀리 번집니다,Cantidad de agua depositada sobre la imagen. Más agua se extiende más lejos,كمية الماء الموضوعة على الصورة. كلما زادت انتشر الحبر أبعد,Jumlah air yang diletakkan pada sumber. Semakin banyak semakin jauh merembes
+Reach,,到達距離,Reach,到达距离,到達距離,도달 거리,Alcance,المدى,Jangkauan
+ReachDescription,,縁から墨が届く距離の上限です。素材の長辺に対する割合で指定します,Upper limit of the distance the ink reaches from the edge as a ratio of the longer side of the source,墨从边缘到达距离的上限。以素材长边的比例指定,墨從邊緣到達距離的上限。以素材長邊的比例指定,가장자리에서 먹이 도달하는 거리의 상한입니다. 소재 긴 변에 대한 비율로 지정합니다,Límite superior de la distancia que alcanza la tinta desde el borde como proporción del lado más largo de la fuente,الحد الأعلى للمسافة التي يصلها الحبر من الحافة كنسبة من الضلع الأطول للمصدر,Batas atas jarak yang dicapai tinta dari tepi sebagai rasio sisi terpanjang sumber
+Fiber,,繊維,Fiber,纤维,纖維,섬유,Fibra,الألياف,Serat
+FiberDescription,,紙の繊維むらの強さです。高いほど枝分かれした流れになります,Strength of the paper fiber irregularity. Higher values branch the flow,纸张纤维不均的强度。数值越高越呈分支状流动,紙張纖維不均的強度。數值越高越呈分支狀流動,종이 섬유 불균일의 강도입니다. 높을수록 흐름이 가지를 칩니다,Intensidad de la irregularidad de las fibras del papel. Valores altos ramifican el flujo,شدة عدم انتظام ألياف الورق. القيم الأعلى تجعل التدفق يتفرع,Kekuatan ketidakrataan serat kertas. Nilai tinggi membuat aliran bercabang
+Sizing,,にじみ止め,Sizing,矾水,礬水,번짐 방지,Apresto,الشب,Sizing
+SizingDescription,,礬水による浸透の妨げです。高いほど縁が荒れて広がりが抑えられます,Alum sizing that impedes the flow. Higher values roughen the edge and limit the spread,矾水对渗透的阻碍。数值越高边缘越粗糙且扩散越受限,礬水對滲透的阻礙。數值越高邊緣越粗糙且擴散越受限,반수에 의한 침투 방해입니다. 높을수록 가장자리가 거칠어지고 번짐이 억제됩니다,Apresto de alumbre que impide el flujo. Valores altos endurecen el borde y limitan la extensión,شب يعيق التدفق. القيم الأعلى تخشن الحافة وتحد من الانتشار,Sizing tawas yang menghambat aliran. Nilai tinggi mengasarkan tepi dan membatasi penyebaran
+Viscosity,,粘度,Viscosity,粘度,黏度,점도,Viscosidad,اللزوجة,Viskositas
+ViscosityDescription,,膠による墨の粘りです。高いほど流れが遅く留まりやすくなります,Glue viscosity of the ink. Higher values slow the flow and keep the ink in place,胶带来的墨的黏性。数值越高流动越慢越易停留,膠帶來的墨的黏性。數值越高流動越慢越易停留,아교에 의한 먹의 점성입니다. 높을수록 흐름이 느려지고 머무르기 쉬워집니다,Viscosidad de la tinta por la cola. Valores altos ralentizan el flujo y fijan la tinta,لزوجة الحبر بسبب الغراء. القيم الأعلى تبطئ التدفق وتثبت الحبر,Kekentalan tinta karena lem. Nilai tinggi memperlambat aliran dan menahan tinta
+Drying,,乾燥,Drying,干燥,乾燥,건조,Secado,الجفاف,Pengeringan
+DryingDescription,,水の蒸発の速さです。高いほど早く乾いて縁が濃くなります,Evaporation speed of the water. Higher values dry faster and darken the edge,水的蒸发速度。数值越高干得越快且边缘越浓,水的蒸發速度。數值越高乾得越快且邊緣越濃,물의 증발 속도입니다. 높을수록 빨리 말라 가장자리가 진해집니다,Velocidad de evaporación del agua. Valores altos secan antes y oscurecen el borde,سرعة تبخر الماء. القيم الأعلى تجفف أسرع وتغمق الحافة,Kecepatan penguapan air. Nilai tinggi mengering lebih cepat dan menggelapkan tepi
+Seed,,シード,Seed,种子,種子,시드,Semilla,البذرة,Seed
+SeedDescription,,紙の繊維とにじみの形を決める固定値です,A fixed value that determines the paper fibers and the shape of the dispersion,决定纸张纤维与渗化形状的固定值,決定紙張纖維與滲化形狀的固定值,종이 섬유와 번짐의 형태를 결정하는 고정값입니다,Valor fijo que determina las fibras del papel y la forma de la dispersión,قيمة ثابتة تحدد ألياف الورق وشكل الانتشار,Nilai tetap yang menentukan serat kertas dan bentuk dispersi
+Density,,濃度,Density,浓度,濃度,농도,Densidad,التركيز,Kepekatan
+DensityDescription,,墨の濃さです,Darkness of the ink,墨的浓度,墨的濃度,먹의 진하기입니다,Oscuridad de la tinta,درجة تركيز الحبر,Kepekatan tinta
+Grain,,かすれ,Grain,飞白,飛白,갈필,Trazo seco,التحبب,Guratan Kering
+GrainDescription,,紙目によるかすれと縁の荒れの強さです,Strength of the dry-brush grain and the edge roughening from the paper texture,纸纹带来的飞白与边缘粗糙的强度,紙紋帶來的飛白與邊緣粗糙的強度,종이결에 의한 갈필과 가장자리 거칠기의 강도입니다,Intensidad del trazo seco y del borde áspero por la textura del papel,شدة التحبب وخشونة الحافة الناتجة عن نسيج الورق,Kekuatan guratan kering dan kekasaran tepi dari tekstur kertas
+InkColor,,墨色,Color,墨色,墨色,먹색,Color,لون الحبر,Warna
+InkColorDescription,,墨の色です,Color of the ink,墨的颜色,墨的顏色,먹의 색입니다,Color de la tinta,لون الحبر,Warna tinta
+QualityBalanced,,標準,Balanced,标准,標準,표준,Estándar,قياسي,Standar
+QualityBalancedDescription,,格子解像度とステップ数を抑えた設定です,Uses reduced lattice resolution and step counts,降低网格分辨率与步数的设置,降低網格解析度與步數的設定,격자 해상도와 스텝 수를 줄인 설정입니다,Configuración con resolución de retícula y pasos reducidos,إعداد بدقة شبكة وعدد خطوات مخفضين,Pengaturan dengan resolusi kisi dan langkah yang dikurangi
+QualityHigh,,高品質,High,高品质,高品質,고품질,Alta,عالية,Tinggi
+QualityHighDescription,,品質と処理量の基準設定です,The reference balance of quality and cost,品质与处理量的基准设置,品質與處理量的基準設定,품질과 처리량의 기준 설정입니다,Configuración de referencia entre calidad y coste,الإعداد المرجعي للتوازن بين الجودة والتكلفة,Pengaturan acuan antara kualitas dan beban proses
+QualityUltra,,最高品質,Ultra,最高品质,最高品質,최고 품질,Máxima,قصوى,Ultra
+QualityUltraDescription,,最大の格子解像度とステップ数を使用します,Uses the largest lattice resolution and step counts,使用最大的网格分辨率与步数,使用最大的網格解析度與步數,최대 격자 해상도와 스텝 수를 사용합니다,Usa la mayor resolución de retícula y el mayor número de pasos,يستخدم أكبر دقة شبكة وأكبر عدد من الخطوات,Menggunakan resolusi kisi dan jumlah langkah terbesar
+TagInk,,墨,Ink,墨,墨,먹,Tinta,حبر,Tinta
+TagBlot,,にじみ,Blot,渗化,滲化,번짐,Mancha,تسرب,Rembesan
+TagJapanese,,和風,Japanese style,和风,和風,일본풍,Estilo japonés,النمط الياباني,Gaya Jepang
+UpdateAvailableMessage,,新しいバージョン {0} が公開されています。,A new version {0} is available.,新版本 {0} 已发布。,新版本 {0} 已發布。,새 버전 {0}이(가) 공개되었습니다.,La nueva versión {0} ya está disponible.,تم إصدار نسخة جديدة {0}.,Versi baru {0} telah dirilis.
