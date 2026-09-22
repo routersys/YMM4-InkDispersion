@@ -90,7 +90,17 @@ public sealed class InkDispersionEffect : VideoEffectBase
     public override IEnumerable<string> CreateExoVideoFilters(int keyFrameIndex, ExoOutputDescription exoOutputDescription) => [];
 
     public override IVideoEffectProcessor CreateVideoEffect(IGraphicsDevicesAndContext devices)
-        => new InkDispersionEffectProcessor(devices, this);
+    {
+        try
+        {
+            return new InkDispersionEffectProcessor(devices, this);
+        }
+        catch (Exception exception)
+        {
+            InkDispersionTelemetry.Report(exception);
+            throw;
+        }
+    }
 
     protected override IEnumerable<IAnimatable> GetAnimatables()
         => _animatables ??= [Amount, Spread, Water, Reach, Fiber, Sizing, Viscosity, Drying, Density, Grain];

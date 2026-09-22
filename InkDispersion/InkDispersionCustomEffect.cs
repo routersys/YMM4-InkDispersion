@@ -33,7 +33,18 @@ internal sealed class InkDispersionCustomEffect(IGraphicsDevicesAndContext devic
 
         protected override void UpdateConstants()
         {
-            drawInformation?.SetPixelShaderConstantBuffer(_cb);
+            if (drawInformation is null)
+                return;
+
+            try
+            {
+                drawInformation.SetPixelShaderConstantBuffer(_cb);
+            }
+            catch (Exception exception)
+            {
+                InkDispersionTelemetry.Report(exception);
+                throw;
+            }
         }
 
         public override void MapInputRectsToOutputRect(

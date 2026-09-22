@@ -42,6 +42,19 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
 
     public override DrawDescription Update(EffectDescription effectDescription)
     {
+        try
+        {
+            return UpdateCore(effectDescription);
+        }
+        catch (Exception exception)
+        {
+            InkDispersionTelemetry.Report(exception);
+            throw;
+        }
+    }
+
+    private DrawDescription UpdateCore(EffectDescription effectDescription)
+    {
         if (IsPassThroughEffect || _effect is null || _outputCrop is null || _outputTransform is null || _outputTransformOutput is null || _resourceSet is null || _interopProvider is null || _pipeline is null || input is null)
             return effectDescription.DrawDescription;
 
@@ -290,8 +303,9 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
             _resourceSet = InkDispersionResourceSet.Create(interopDevice, _interopDomain);
             _pipeline = InkDispersionPipeline.TryCreate(interopDevice);
         }
-        catch
+        catch (Exception exception)
         {
+            InkDispersionTelemetry.Report(exception);
             ReleaseInterop();
             throw;
         }
@@ -339,8 +353,9 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
             disposer.Collect(output);
             return output;
         }
-        catch
+        catch (Exception exception)
         {
+            InkDispersionTelemetry.Report(exception);
             output?.Dispose();
             outputTransformOutput?.Dispose();
             outputTransform?.Dispose();
@@ -360,6 +375,19 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
     }
 
     protected override void ClearEffectChain()
+    {
+        try
+        {
+            ClearEffectChainCore();
+        }
+        catch (Exception exception)
+        {
+            InkDispersionTelemetry.Report(exception);
+            throw;
+        }
+    }
+
+    private void ClearEffectChainCore()
     {
         _effect?.SetInput(0, null, true);
         _effect?.SetInput(1, null, true);
