@@ -565,47 +565,14 @@ public sealed class InkDispersionEffectTests
         const int height = 96;
         const int fullHdWidth = 1920;
         const int fullHdHeight = 1080;
-        var pixels = CreateSquareSource(width, height, 32, 32, 32, 32);
-        var handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
-        using var inputBitmap = graphicsContext.DeviceContext.CreateBitmap(
-            new SizeI(width, height),
-            new BitmapProperties1(
-                new PixelFormat(Format.B8G8R8A8_UNorm, Vortice.DCommon.AlphaMode.Premultiplied),
-                96f,
-                96f,
-                BitmapOptions.None));
-        try
-        {
-            inputBitmap.CopyFromMemory(handle.AddrOfPinnedObject(), width * sizeof(int));
-        }
-        finally
-        {
-            handle.Free();
-        }
+        using var inputBitmap = CreateInputBitmap(graphicsContext.DeviceContext, CreateSquareSource(width, height, 32, 32, 32, 32), width, height);
 
         Assert.True(resourceSet.TryEnsureSource(width, height, out _));
         var parameters = CreateParameters();
-        var renderContext = provider.RenderContext;
         InkDispersionPipeline.PixelRect visible = default;
         for (var iteration = 0; iteration < 2; iteration++)
         {
-            using (var borrow = resourceSet.BeginSourceExternalOperation())
-            {
-                var previousTarget = renderContext.Target;
-                using var sourceBitmap = new ID2D1Bitmap1(borrow.DangerousGetView().AddRefBitmap());
-                renderContext.Target = sourceBitmap;
-                renderContext.BeginDraw();
-                renderContext.Clear(null);
-                renderContext.DrawImage(
-                    inputBitmap,
-                    new System.Numerics.Vector2(0f, 0f),
-                    null,
-                    InterpolationMode.NearestNeighbor,
-                    CompositeMode.SourceCopy);
-                renderContext.EndDraw();
-                renderContext.Target = previousTarget;
-            }
-
+            DrawSource(resourceSet, provider.RenderContext, inputBitmap);
             pipeline!.Simulate(
                 resourceSet.GetSourceComputeBinding(), width, height, 0, 0, width, height, in parameters);
             Assert.True(pipeline.TryGetVisibleBounds(width, height, in parameters, out visible));
@@ -627,7 +594,51 @@ public sealed class InkDispersionEffectTests
         using var outputLease = resourceSet.AcquireOutputExternalViewLease();
         Assert.Equal(fullHdWidth, outputLease.Width);
         Assert.Equal(fullHdHeight, outputLease.Height);
-        using var staging = graphicsContext.DeviceContext.CreateBitmap(
+        Assert.True(CountLitOutput(graphicsContext.DeviceContext, outputLease, visible) > 0);
+    }
+
+    private static ID2D1Bitmap1 CreateInputBitmap(ID2D1DeviceContext6 deviceContext, int[] pixels, int width, int height)
+    {
+        var handle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+        var inputBitmap = deviceContext.CreateBitmap(
+            new SizeI(width, height),
+            new BitmapProperties1(
+                new PixelFormat(Format.B8G8R8A8_UNorm, Vortice.DCommon.AlphaMode.Premultiplied),
+                96f,
+                96f,
+                BitmapOptions.None));
+        try
+        {
+            inputBitmap.CopyFromMemory(handle.AddrOfPinnedObject(), width * sizeof(int));
+        }
+        finally
+        {
+            handle.Free();
+        }
+        return inputBitmap;
+    }
+
+    private static void DrawSource(InkDispersionResourceSet resourceSet, ID2D1DeviceContext6 renderContext, ID2D1Bitmap1 inputBitmap)
+    {
+        using var borrow = resourceSet.BeginSourceExternalOperation();
+        var previousTarget = renderContext.Target;
+        using var sourceBitmap = new ID2D1Bitmap1(borrow.DangerousGetView().AddRefBitmap());
+        renderContext.Target = sourceBitmap;
+        renderContext.BeginDraw();
+        renderContext.Clear(null);
+        renderContext.DrawImage(
+            inputBitmap,
+            new System.Numerics.Vector2(0f, 0f),
+            null,
+            InterpolationMode.NearestNeighbor,
+            CompositeMode.SourceCopy);
+        renderContext.EndDraw();
+        renderContext.Target = previousTarget;
+    }
+
+    private static int CountLitOutput(ID2D1DeviceContext6 deviceContext, ExternalTextureLease<ExternalDirect3D11TextureView> outputLease, InkDispersionPipeline.PixelRect visible)
+    {
+        using var staging = deviceContext.CreateBitmap(
             new SizeI(visible.Width, visible.Height),
             new BitmapProperties1(
                 new PixelFormat(Format.B8G8R8A8_UNorm, Vortice.DCommon.AlphaMode.Premultiplied),
@@ -653,7 +664,7 @@ public sealed class InkDispersionEffectTests
                         lit++;
                 }
             }
-            Assert.True(lit > 0);
+            return lit;
         }
         finally
         {
