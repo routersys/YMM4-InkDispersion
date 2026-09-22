@@ -216,11 +216,11 @@ YukkuriMovieMaker4（YMM4）上で動作する、素材の形に置いた墨が�
 
 ## サードパーティライセンス
 
-本プラグインは次のサードパーティソフトウェアを同梱しています。ライセンスの全文は、リポジトリの [`.github/LICENSE/ComputeSharp.txt`](.github/LICENSE/ComputeSharp.txt) と、配布パッケージの `LICENSE` フォルダーに収録しています。
+本プラグインは次のサードパーティソフトウェアを同梱しています。ライセンスの全文は、リポジトリの [`.github/LICENSE/ComputeWeave.txt`](.github/LICENSE/ComputeWeave.txt) と、配布パッケージの `LICENSE` フォルダーに収録しています。
 
 | ソフトウェア | 用途 | ライセンス | 著作権表示 |
 |---|---|---|---|
-| [ComputeSharp](https://github.com/routersys/ComputeSharp) | Direct3D 12 の計算シェーダーと、Direct3D 11 との共有処理 | MIT License | Copyright (c) 2024 Sergio Pedri |
+| [ComputeWeave](https://github.com/routersys/ComputeWeave) | Direct3D 12 の計算シェーダーと、Direct3D 11 との共有処理 | MIT License | Copyright (c) 2024 Sergio Pedri |
 
 ---
 
