@@ -1,0 +1,184 @@
+{
+  "adapter": "Intel(R) Iris(R) Xe Graphics",
+  "driver": "32.0.101.7085",
+  "input": "synthetic 640x480 89838D8976198E40",
+  "canvas": "1280x720",
+  "cases": [
+    {
+      "name": "default",
+      "frames": [
+        0
+      ],
+      "hash": "113DFDEA266926477973E98AE6206E6E298E742156AA4C6D1A8081FC99165B0F"
+    },
+    {
+      "name": "default-frames-0-8",
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "hash": "4653381D89BBF5C2D9F29E1FAEB2822DAF4A44531FB86D41A652D4A7D58A2DDA"
+    },
+    {
+      "name": "amount-0",
+      "frames": [
+        0
+      ],
+      "hash": "0A700F76CEDDBAD7C4B6A2C19D46939C1A93940E86C6EFEF1E5A53DB48D2A020"
+    },
+    {
+      "name": "spread-35",
+      "frames": [
+        0
+      ],
+      "hash": "2044C449FFA2EF1710F87E316F67A84FF0C65A4D702C361F616BE54DB1CB0D14"
+    },
+    {
+      "name": "quality-balanced",
+      "frames": [
+        0
+      ],
+      "hash": "E92F4034561AC95343AD3219F3A3136BB4EC837B2821E7BEBB0F01041426D614"
+    },
+    {
+      "name": "quality-ultra",
+      "frames": [
+        0
+      ],
+      "hash": "A2EF7866CAF0DE8DD6956B87DA0201CA09B5756D6E86589A4A0A4987329BE99B"
+    },
+    {
+      "name": "water-0",
+      "frames": [
+        0
+      ],
+      "hash": "6EEE4F9E922BE90793EBAC22294CE3D4FD93AD558B7F4871A0C4AF19B7E8052C"
+    },
+    {
+      "name": "water-100",
+      "frames": [
+        0
+      ],
+      "hash": "DBC385C9E9D360CD7389F8BF246029B3755BC45D6C096DD13F1FD93AEBF08048"
+    },
+    {
+      "name": "reach-5",
+      "frames": [
+        0
+      ],
+      "hash": "4BBE0349A16CE6900E0FE6A7C377DDD067ACE06EC874F7DBA29E82DD4D8D70A2"
+    },
+    {
+      "name": "reach-100",
+      "frames": [
+        0
+      ],
+      "hash": "35E77F455F45CC4D77E29E28C57E961632817D6D091C626B6F3D10FD9AA00CBB"
+    },
+    {
+      "name": "fiber-0",
+      "frames": [
+        0
+      ],
+      "hash": "04A35B75273746A7D5C75FD95C54D0AC7BA22E218FD204D2C8C0B1B04ABC6F16"
+    },
+    {
+      "name": "fiber-100",
+      "frames": [
+        0
+      ],
+      "hash": "6E6A13A2375BD6921BCEB73E1645F01F264415D9F93C624E2FCEFF09313EE765"
+    },
+    {
+      "name": "sizing-0",
+      "frames": [
+        0
+      ],
+      "hash": "C6C5845EE3137EFF91466779BEC27BD99A20D67AD9AF0A51F13E5A396B78A2E7"
+    },
+    {
+      "name": "sizing-100",
+      "frames": [
+        0
+      ],
+      "hash": "596DE879C4F54E499A66BBFA297F3E6E4606B3D41EE217BB3E06181B131D5F54"
+    },
+    {
+      "name": "viscosity-0",
+      "frames": [
+        0
+      ],
+      "hash": "3F2C41AA4D05FF0705CB6A4BE8319720A8C2B5D14AA3E6E08A15FD1D6EFA1706"
+    },
+    {
+      "name": "viscosity-100",
+      "frames": [
+        0
+      ],
+      "hash": "6E6A03CA3974EAFB62F13733A0E0FB32EA5DC1F66F46F6EC9D81B1E4366FEA08"
+    },
+    {
+      "name": "drying-0",
+      "frames": [
+        0
+      ],
+      "hash": "85E2D827928F912387FD99F1E823A9D7BC818165F2AD584EE92AD892F30C4616"
+    },
+    {
+      "name": "drying-100",
+      "frames": [
+        0
+      ],
+      "hash": "693FB39C5E31205DA071B5A25A727DD0D9E43F3B7FEE0C8F9675A2E279639F60"
+    },
+    {
+      "name": "density-20",
+      "frames": [
+        0
+      ],
+      "hash": "3A9AD2B483E1FEC9CE17F89DB4A644A861303F40F2156A0DD53C1D1B3D81ED0B"
+    },
+    {
+      "name": "density-100",
+      "frames": [
+        0
+      ],
+      "hash": "1062F6A23B59C4BD299A8A1D2DFDE67A7DF408DA253539852E8CD6DE4B6325E6"
+    },
+    {
+      "name": "grain-0",
+      "frames": [
+        0
+      ],
+      "hash": "8A28925D962C7E78663F013D0C762B55FE2F1814726C38F5256E5BA4B4943F8A"
+    },
+    {
+      "name": "grain-100",
+      "frames": [
+        0
+      ],
+      "hash": "BEC09BDABBFA8BAA56724AC155B08B27216C570D88F5C17C56EB0461F09AEBC7"
+    },
+    {
+      "name": "seed-42",
+      "frames": [
+        0
+      ],
+      "hash": "EBC1618FEA6112B2A7A90F770495E920773D1685D048B336460C573870DD0DE0"
+    },
+    {
+      "name": "ink-color",
+      "frames": [
+        0
+      ],
+      "hash": "7F958DC79DC050C1A41B763BF3E6BC8E93126948F95AD864D685F2A9D472EF0C"
+    }
+  ]
+}
