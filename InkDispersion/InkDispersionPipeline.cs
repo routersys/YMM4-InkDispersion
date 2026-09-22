@@ -115,10 +115,36 @@ internal sealed class InkDispersionPipeline : IDisposable
         int sourceHeight,
         in Parameters parameters)
     {
-        EnsureGridFor(canvasWidth, canvasHeight, parameters.Quality);
-        var derived = Derive(canvasWidth, canvasHeight, in parameters);
+        var derived = BeginSimulate(canvasWidth, canvasHeight, in parameters);
         _host.RecordSilhouetteAndMaskHash(
             source, _scratch, sourceOffsetX, sourceOffsetY, sourceWidth, sourceHeight, _gridWidth, _gridHeight, in derived).Wait();
+        return CompleteSimulate(canvasWidth, canvasHeight, in parameters, in derived);
+    }
+
+    internal bool Simulate(
+        ComputeResourceBinding<ReadWriteTexture2D<Bgra32, Float4>> source,
+        int canvasWidth,
+        int canvasHeight,
+        int sourceOffsetX,
+        int sourceOffsetY,
+        int sourceWidth,
+        int sourceHeight,
+        in Parameters parameters)
+    {
+        var derived = BeginSimulate(canvasWidth, canvasHeight, in parameters);
+        _host.RecordSharedSilhouetteAndMaskHash(
+            source, _scratch, sourceOffsetX, sourceOffsetY, sourceWidth, sourceHeight, _gridWidth, _gridHeight, in derived).Wait();
+        return CompleteSimulate(canvasWidth, canvasHeight, in parameters, in derived);
+    }
+
+    private DerivedValues BeginSimulate(int canvasWidth, int canvasHeight, in Parameters parameters)
+    {
+        EnsureGridFor(canvasWidth, canvasHeight, parameters.Quality);
+        return Derive(canvasWidth, canvasHeight, in parameters);
+    }
+
+    private bool CompleteSimulate(int canvasWidth, int canvasHeight, in Parameters parameters, in DerivedValues derived)
+    {
         _scratchReadBack.CopyFrom(_scratch);
         var hashed = _scratchReadBack.Span;
         var key = new StructureKey(
@@ -188,6 +214,17 @@ internal sealed class InkDispersionPipeline : IDisposable
     {
         var derived = Derive(canvasWidth, canvasHeight, in parameters);
         _host.RecordRender(output, _scratch, _inkStep!, in rect, _gridWidth, _gridHeight, in derived, in parameters).Wait();
+    }
+
+    internal void RenderVisible(
+        ComputeResourceBinding<ReadWriteTexture2D<Bgra32, Float4>> output,
+        int canvasWidth,
+        int canvasHeight,
+        PixelRect rect,
+        in Parameters parameters)
+    {
+        var derived = Derive(canvasWidth, canvasHeight, in parameters);
+        _host.RecordSharedRender(output, _scratch, _inkStep!, in rect, _gridWidth, _gridHeight, in derived, in parameters).Wait();
     }
 
     private ComputeSubmission SubmitFullPipeline(

@@ -102,6 +102,46 @@ internal sealed partial class InkDispersionPipelineHost
     }
 
     [ComputePipeline]
+    [ComputeInterop]
+    private void RecordSharedSilhouetteAndMaskHash(
+        in ComputeContext context,
+        [ComputeOwnedResource(nameof(_grid))] InkDispersionGridResources grid,
+        [ComputeResource(ComputeResourceAccess.ReadWrite, Sharing = ComputeResourceSharing.External)] ReadWriteTexture2D<Bgra32, Float4> source,
+        [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> scratch,
+        int sourceOffsetX,
+        int sourceOffsetY,
+        int sourceWidth,
+        int sourceHeight,
+        int gridWidth,
+        int gridHeight,
+        in InkDispersionPipeline.DerivedValues derived)
+    {
+        _ = _device;
+
+        RecordSilhouetteStage(in context, grid, source, sourceOffsetX, sourceOffsetY, sourceWidth, sourceHeight, gridWidth, gridHeight, in derived);
+        RecordMaskHashStage(in context, grid, scratch, gridWidth, gridHeight);
+    }
+
+    [ComputePipeline]
+    [ComputeInterop]
+    private void RecordSharedRender(
+        in ComputeContext context,
+        [ComputeOwnedResource(nameof(_grid))] InkDispersionGridResources grid,
+        [ComputeResource(ComputeResourceAccess.ReadWrite, Sharing = ComputeResourceSharing.External)] ReadWriteTexture2D<Bgra32, Float4> output,
+        [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> scratch,
+        [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> inkStep,
+        in InkDispersionPipeline.PixelRect rect,
+        int gridWidth,
+        int gridHeight,
+        in InkDispersionPipeline.DerivedValues derived,
+        in InkDispersionPipeline.Parameters parameters)
+    {
+        _ = _device;
+
+        RecordRenderStage(in context, grid, output, scratch, inkStep, rect, gridWidth, gridHeight, in derived, in parameters);
+    }
+
+    [ComputePipeline]
     private void RecordFlow(
         in ComputeContext context,
         [ComputeOwnedResource(nameof(_grid))] InkDispersionGridResources grid,
