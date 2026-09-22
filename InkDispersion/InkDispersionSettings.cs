@@ -48,6 +48,7 @@ internal static class InkDispersionSettings
     public const int ScratchMaxWetStep = 1;
     public const int ScratchMaskHashSum = 6;
     public const int ScratchMaskHashMix = 7;
+    public const int MaximumPendingSubmissions = 32;
 
     public static QualitySettings GetQuality(InkDispersionQuality quality)
         => quality switch
