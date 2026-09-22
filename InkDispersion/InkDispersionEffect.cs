@@ -16,6 +16,7 @@ public sealed class InkDispersionEffect : VideoEffectBase
 
     public InkDispersionEffect()
     {
+        InkDispersionTelemetry.EnsureStartedOnce();
         InkDispersionUpdateNotifier.EnsureCheckedOnce();
     }
 
