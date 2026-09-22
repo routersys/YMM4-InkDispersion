@@ -158,9 +158,13 @@ internal readonly partial struct InitFieldShader(
     ReadWriteBuffer<float> wetness,
     ReadWriteBuffer<Float2> velocity,
     ReadWriteBuffer<int> inkStep,
+    ReadWriteBuffer<float> fiberField,
+    ReadWriteBuffer<float> alumField,
+    ReadWriteBuffer<float> pinField,
     int gridWidth,
     int gridHeight,
-    float depositScale) : IComputeShader
+    float depositScale,
+    int seed) : IComputeShader
 {
     private readonly ReadWriteBuffer<float> distributionsA = distributionsA;
     private readonly ReadWriteBuffer<float> distributionsB = distributionsB;
@@ -174,9 +178,13 @@ internal readonly partial struct InitFieldShader(
     private readonly ReadWriteBuffer<float> wetness = wetness;
     private readonly ReadWriteBuffer<Float2> velocity = velocity;
     private readonly ReadWriteBuffer<int> inkStep = inkStep;
+    private readonly ReadWriteBuffer<float> fiberField = fiberField;
+    private readonly ReadWriteBuffer<float> alumField = alumField;
+    private readonly ReadWriteBuffer<float> pinField = pinField;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
     private readonly float depositScale = depositScale;
+    private readonly int seed = seed;
 
     public void Execute()
     {
@@ -201,6 +209,9 @@ internal readonly partial struct InitFieldShader(
         wetness[index] = 0f;
         velocity[index] = new Float2(0f, 0f);
         inkStep[index] = InkDispersionSettings.BirthSentinel;
+        fiberField[index] = InkDispersionShaderMath.FiberField(gx, gy, seed);
+        alumField[index] = InkDispersionShaderMath.AlumField(gx, gy, seed);
+        pinField[index] = InkDispersionShaderMath.PinField(gx, gy, seed);
     }
 }
 
@@ -375,10 +386,12 @@ internal readonly partial struct KappaShader(
     ReadWriteBuffer<float> density,
     ReadWriteBuffer<float> fixedPigment,
     ReadWriteBuffer<int> reachMask,
+    ReadWriteBuffer<float> fiberField,
+    ReadWriteBuffer<float> alumField,
+    ReadWriteBuffer<float> pinField,
     ReadWriteBuffer<float> kappa,
     int gridWidth,
     int gridHeight,
-    int seed,
     float fiber,
     float sizing,
     float viscosity,
@@ -387,10 +400,12 @@ internal readonly partial struct KappaShader(
     private readonly ReadWriteBuffer<float> density = density;
     private readonly ReadWriteBuffer<float> fixedPigment = fixedPigment;
     private readonly ReadWriteBuffer<int> reachMask = reachMask;
+    private readonly ReadWriteBuffer<float> fiberField = fiberField;
+    private readonly ReadWriteBuffer<float> alumField = alumField;
+    private readonly ReadWriteBuffer<float> pinField = pinField;
     private readonly ReadWriteBuffer<float> kappa = kappa;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
-    private readonly int seed = seed;
     private readonly float fiber = fiber;
     private readonly float sizing = sizing;
     private readonly float viscosity = viscosity;
@@ -409,7 +424,7 @@ internal readonly partial struct KappaShader(
 
         if (density[index] <= InkDispersionSettings.WetEpsilon)
         {
-            var pin = InkDispersionShaderMath.PinField(gx, gy, seed);
+            var pin = pinField[index];
             var accumulated = Hlsl.Min(fixedPigment[index], 1f);
             var threshold = sigma * (0.4f + 0.6f * pin) * (1f + accumulated);
             var pinned = true;
@@ -431,8 +446,8 @@ internal readonly partial struct KappaShader(
             }
         }
 
-        var grain = InkDispersionShaderMath.FiberField(gx, gy, seed);
-        var alum = InkDispersionShaderMath.AlumField(gx, gy, seed);
+        var grain = fiberField[index];
+        var alum = alumField[index];
         var blocking = InkDispersionSettings.KappaBase
             + InkDispersionSettings.KappaFiber * fiber * grain
             + InkDispersionSettings.KappaAlum * sizing * alum
@@ -582,11 +597,11 @@ internal readonly partial struct PigmentShader(
     ReadWriteBuffer<int> inkStep,
     ReadWriteBuffer<int> reachMask,
     ReadWriteBuffer<float> deposit,
+    ReadWriteBuffer<float> fiberField,
     ReadWriteBuffer<int> scratch,
     int gridWidth,
     int gridHeight,
     int step,
-    int seed,
     float fiber,
     float viscosity) : IComputeShader
 {
@@ -601,11 +616,11 @@ internal readonly partial struct PigmentShader(
     private readonly ReadWriteBuffer<int> inkStep = inkStep;
     private readonly ReadWriteBuffer<int> reachMask = reachMask;
     private readonly ReadWriteBuffer<float> deposit = deposit;
+    private readonly ReadWriteBuffer<float> fiberField = fiberField;
     private readonly ReadWriteBuffer<int> scratch = scratch;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
     private readonly int step = step;
-    private readonly int seed = seed;
     private readonly float fiber = fiber;
     private readonly float viscosity = viscosity;
 
@@ -676,7 +691,7 @@ internal readonly partial struct PigmentShader(
                 }
             }
             var speed = Hlsl.Sqrt(u.X * u.X + u.Y * u.Y);
-            var grain = InkDispersionShaderMath.FiberField(gx, gy, seed);
+            var grain = fiberField[index];
             var hindrance = Hlsl.Saturate(InkDispersionSettings.HindranceBase + InkDispersionSettings.HindranceFiber * fiber * grain);
             var mix = Hlsl.Lerp(1f, hindrance, Hlsl.SmoothStep(0f, InkDispersionSettings.HindranceSpeed, speed));
             advected = Hlsl.Lerp(advected, pigment, mix);

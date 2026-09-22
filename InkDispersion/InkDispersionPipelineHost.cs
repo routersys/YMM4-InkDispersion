@@ -49,6 +49,15 @@ internal sealed partial class InkDispersionGridResources
 
     [ComputePipelineResource(ComputeResourceAccess.ReadWrite)]
     internal ReadWriteBuffer<int> JumpFloodB { get; }
+
+    [ComputePipelineResource(ComputeResourceAccess.ReadWrite)]
+    internal ReadWriteBuffer<float> FiberField { get; }
+
+    [ComputePipelineResource(ComputeResourceAccess.ReadWrite)]
+    internal ReadWriteBuffer<float> AlumField { get; }
+
+    [ComputePipelineResource(ComputeResourceAccess.ReadWrite)]
+    internal ReadWriteBuffer<float> PinField { get; }
 }
 
 [ComputePipelineHost("_device", 1)]
@@ -219,8 +228,8 @@ internal sealed partial class InkDispersionPipelineHost
         context.Barrier(scratch);
         context.For(gridWidth, gridHeight, new InitFieldShader(
             grid.DistributionsA, grid.DistributionsB, grid.Deposit, grid.Surface, grid.FlowPigmentA, grid.FlowPigmentB, grid.FixedPigment,
-            grid.DensityA, grid.DensityB, grid.Wetness, grid.Velocity, inkStep,
-            gridWidth, gridHeight, derived.Deposit));
+            grid.DensityA, grid.DensityB, grid.Wetness, grid.Velocity, inkStep, grid.FiberField, grid.AlumField, grid.PinField,
+            gridWidth, gridHeight, derived.Deposit, parameters.Seed));
         context.Barrier(grid.DistributionsA);
         context.Barrier(grid.DistributionsB);
         context.Barrier(grid.Surface);
@@ -232,6 +241,9 @@ internal sealed partial class InkDispersionPipelineHost
         context.Barrier(grid.Wetness);
         context.Barrier(grid.Velocity);
         context.Barrier(inkStep);
+        context.Barrier(grid.FiberField);
+        context.Barrier(grid.AlumField);
+        context.Barrier(grid.PinField);
 
         context.For(gridWidth, gridHeight, new JumpFloodSeedShader(grid.Deposit, grid.JumpFloodA, gridWidth, gridHeight));
         context.Barrier(grid.JumpFloodA);
@@ -266,8 +278,8 @@ internal sealed partial class InkDispersionPipelineHost
             context.Barrier(pigmentIn);
             context.Barrier(grid.DensityA);
             context.For(gridWidth, gridHeight, new KappaShader(
-                grid.DensityA, grid.FixedPigment, grid.ReachMask, grid.Kappa, gridWidth, gridHeight,
-                parameters.Seed, derived.Fiber, derived.Sizing, derived.Viscosity, derived.Sigma));
+                grid.DensityA, grid.FixedPigment, grid.ReachMask, grid.FiberField, grid.AlumField, grid.PinField, grid.Kappa, gridWidth, gridHeight,
+                derived.Fiber, derived.Sizing, derived.Viscosity, derived.Sigma));
             context.Barrier(grid.Kappa);
             context.For(gridWidth, gridHeight, new StreamCollideShader(
                 distributionsIn, distributionsOut, grid.Kappa, grid.ReachMask, grid.Deposit, grid.DensityB, grid.Velocity,
@@ -277,8 +289,8 @@ internal sealed partial class InkDispersionPipelineHost
             context.Barrier(grid.Velocity);
             context.For(gridWidth, gridHeight, new PigmentShader(
                 distributionsOut, grid.DensityA, grid.DensityB, grid.Velocity, pigmentIn, pigmentOut,
-                grid.FixedPigment, grid.Wetness, inkStep, grid.ReachMask, grid.Deposit, scratch,
-                gridWidth, gridHeight, step, parameters.Seed, derived.Fiber, derived.Viscosity));
+                grid.FixedPigment, grid.Wetness, inkStep, grid.ReachMask, grid.Deposit, grid.FiberField, scratch,
+                gridWidth, gridHeight, step, derived.Fiber, derived.Viscosity));
             context.Barrier(pigmentOut);
             context.Barrier(grid.FixedPigment);
             context.Barrier(grid.Wetness);

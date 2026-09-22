@@ -317,17 +317,20 @@ internal sealed class InkDispersionPipeline : IDisposable
         var distributionLength = gridLength * 9;
         if (!_host.TryEnsureGrid(
                 new InkDispersionGridResources.Plan(
+                    alumFieldLength: gridLength,
                     densityALength: gridLength,
                     densityBLength: gridLength,
                     depositLength: gridLength,
                     distributionsALength: distributionLength,
                     distributionsBLength: distributionLength,
+                    fiberFieldLength: gridLength,
                     fixedPigmentLength: gridLength,
                     flowPigmentALength: gridLength,
                     flowPigmentBLength: gridLength,
                     jumpFloodALength: gridLength,
                     jumpFloodBLength: gridLength,
                     kappaLength: gridLength,
+                    pinFieldLength: gridLength,
                     reachMaskLength: gridLength,
                     surfaceLength: gridLength,
                     velocityLength: gridLength,
