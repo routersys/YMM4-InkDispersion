@@ -63,6 +63,4 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
-  <Import Project="..\InkDispersion\ComputeSharp.Reference.props" />
-
 </Project>

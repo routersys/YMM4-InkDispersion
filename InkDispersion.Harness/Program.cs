@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using ComputeSharp;
+using ComputeWeave;
 using InkDispersion;
 
 var width = 1280;

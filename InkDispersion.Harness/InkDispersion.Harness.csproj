@@ -26,6 +26,4 @@
     </Reference>
   </ItemGroup>
 
-  <Import Project="..\InkDispersion\ComputeSharp.Reference.props" />
-
 </Project>
