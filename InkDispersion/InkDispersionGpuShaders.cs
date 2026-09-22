@@ -104,6 +104,10 @@ internal readonly partial struct MaskHashResetShader(
     {
         if (ThreadIds.X != 0)
             return;
+        scratch[2] = int.MaxValue;
+        scratch[3] = int.MaxValue;
+        scratch[4] = int.MinValue;
+        scratch[5] = int.MinValue;
         scratch[6] = 0;
         scratch[7] = 0;
     }
@@ -130,7 +134,15 @@ internal readonly partial struct MaskHashShader(
             return;
 
         var index = gy * gridWidth + gx;
-        var quantized = (int)(deposit[index] * 255f + 0.5f);
+        var value = deposit[index];
+        if (value != 0f)
+        {
+            Hlsl.InterlockedMin(ref scratch[2], gx);
+            Hlsl.InterlockedMin(ref scratch[3], gy);
+            Hlsl.InterlockedMax(ref scratch[4], gx);
+            Hlsl.InterlockedMax(ref scratch[5], gy);
+        }
+        var quantized = (int)(value * 255f + 0.5f);
         if (quantized <= 0)
             return;
 
@@ -339,6 +351,8 @@ internal readonly partial struct SupplyShader(
     ReadWriteBuffer<float> density,
     ReadWriteBuffer<int> reachMask,
     ReadWriteBuffer<float> deposit,
+    int regionX,
+    int regionY,
     int gridWidth,
     int gridHeight) : IComputeShader
 {
@@ -348,13 +362,15 @@ internal readonly partial struct SupplyShader(
     private readonly ReadWriteBuffer<float> density = density;
     private readonly ReadWriteBuffer<int> reachMask = reachMask;
     private readonly ReadWriteBuffer<float> deposit = deposit;
+    private readonly int regionX = regionX;
+    private readonly int regionY = regionY;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
 
     public void Execute()
     {
-        var gx = ThreadIds.X;
-        var gy = ThreadIds.Y;
+        var gx = ThreadIds.X + regionX;
+        var gy = ThreadIds.Y + regionY;
         if (gx >= gridWidth || gy >= gridHeight)
             return;
 
@@ -390,6 +406,8 @@ internal readonly partial struct KappaShader(
     ReadWriteBuffer<float> alumField,
     ReadWriteBuffer<float> pinField,
     ReadWriteBuffer<float> kappa,
+    int regionX,
+    int regionY,
     int gridWidth,
     int gridHeight,
     float fiber,
@@ -404,6 +422,8 @@ internal readonly partial struct KappaShader(
     private readonly ReadWriteBuffer<float> alumField = alumField;
     private readonly ReadWriteBuffer<float> pinField = pinField;
     private readonly ReadWriteBuffer<float> kappa = kappa;
+    private readonly int regionX = regionX;
+    private readonly int regionY = regionY;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
     private readonly float fiber = fiber;
@@ -413,8 +433,8 @@ internal readonly partial struct KappaShader(
 
     public void Execute()
     {
-        var gx = ThreadIds.X;
-        var gy = ThreadIds.Y;
+        var gx = ThreadIds.X + regionX;
+        var gy = ThreadIds.Y + regionY;
         if (gx >= gridWidth || gy >= gridHeight)
             return;
 
@@ -467,6 +487,8 @@ internal readonly partial struct StreamCollideShader(
     ReadWriteBuffer<float> deposit,
     ReadWriteBuffer<float> densityOut,
     ReadWriteBuffer<Float2> velocity,
+    int regionX,
+    int regionY,
     int gridWidth,
     int gridHeight,
     float omega,
@@ -479,6 +501,8 @@ internal readonly partial struct StreamCollideShader(
     private readonly ReadWriteBuffer<float> deposit = deposit;
     private readonly ReadWriteBuffer<float> densityOut = densityOut;
     private readonly ReadWriteBuffer<Float2> velocity = velocity;
+    private readonly int regionX = regionX;
+    private readonly int regionY = regionY;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
     private readonly float omega = omega;
@@ -486,8 +510,8 @@ internal readonly partial struct StreamCollideShader(
 
     public void Execute()
     {
-        var gx = ThreadIds.X;
-        var gy = ThreadIds.Y;
+        var gx = ThreadIds.X + regionX;
+        var gy = ThreadIds.Y + regionY;
         if (gx >= gridWidth || gy >= gridHeight)
             return;
 
@@ -599,6 +623,8 @@ internal readonly partial struct PigmentShader(
     ReadWriteBuffer<float> deposit,
     ReadWriteBuffer<float> fiberField,
     ReadWriteBuffer<int> scratch,
+    int regionX,
+    int regionY,
     int gridWidth,
     int gridHeight,
     int step,
@@ -618,6 +644,8 @@ internal readonly partial struct PigmentShader(
     private readonly ReadWriteBuffer<float> deposit = deposit;
     private readonly ReadWriteBuffer<float> fiberField = fiberField;
     private readonly ReadWriteBuffer<int> scratch = scratch;
+    private readonly int regionX = regionX;
+    private readonly int regionY = regionY;
     private readonly int gridWidth = gridWidth;
     private readonly int gridHeight = gridHeight;
     private readonly int step = step;
@@ -626,8 +654,8 @@ internal readonly partial struct PigmentShader(
 
     public void Execute()
     {
-        var gx = ThreadIds.X;
-        var gy = ThreadIds.Y;
+        var gx = ThreadIds.X + regionX;
+        var gy = ThreadIds.Y + regionY;
         if (gx >= gridWidth || gy >= gridHeight)
             return;
 

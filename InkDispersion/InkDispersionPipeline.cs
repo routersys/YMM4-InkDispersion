@@ -148,8 +148,8 @@ internal sealed class InkDispersionPipeline : IDisposable
         _scratchReadBack.CopyFrom(_scratch);
         var hashed = _scratchReadBack.Span;
         var key = new StructureKey(
-            hashed[6],
-            hashed[7],
+            hashed[InkDispersionSettings.ScratchMaskHashSum],
+            hashed[InkDispersionSettings.ScratchMaskHashMix],
             canvasWidth,
             canvasHeight,
             parameters.Quality,
@@ -163,13 +163,19 @@ internal sealed class InkDispersionPipeline : IDisposable
         if (_structureKey == key)
             return false;
 
-        _host.RecordFlow(_scratch, _inkStep!, _gridWidth, _gridHeight, in derived, in parameters).Wait();
+        var region = GetFlowRegion(
+            hashed[InkDispersionSettings.ScratchBoundsMinX],
+            hashed[InkDispersionSettings.ScratchBoundsMinY],
+            hashed[InkDispersionSettings.ScratchBoundsMaxX],
+            hashed[InkDispersionSettings.ScratchBoundsMaxY],
+            in derived);
+        _host.RecordFlow(_scratch, _inkStep!, in region, _gridWidth, _gridHeight, in derived, in parameters).Wait();
         _scratchReadBack.CopyFrom(_scratch);
         var wetStepReadBack = _inkStepReadBack!;
         wetStepReadBack.CopyFrom(_inkStep!);
         var scratch = _scratchReadBack.Span;
-        _cachedInkCount = scratch[0];
-        _cachedMaxInkStep = scratch[1];
+        _cachedInkCount = scratch[InkDispersionSettings.ScratchWetCount];
+        _cachedMaxInkStep = scratch[InkDispersionSettings.ScratchMaxWetStep];
         wetStepReadBack.Span.CopyTo(_cachedInkStep!);
         BuildBoundsPrefix();
         _structureKey = key;
@@ -237,6 +243,19 @@ internal sealed class InkDispersionPipeline : IDisposable
         _structureKey = null;
         var derived = Derive(width, height, in parameters);
         return _host.RecordFullPipeline(source, output, _scratch, _inkStep!, width, height, _gridWidth, _gridHeight, in derived, in parameters);
+    }
+
+    private CellRect GetFlowRegion(int minX, int minY, int maxX, int maxY, in DerivedValues derived)
+    {
+        if (minX > maxX || minY > maxY)
+            return new CellRect(0, 0, _gridWidth, _gridHeight);
+
+        var dilation = (int)MathF.Ceiling(derived.ReachPixels / derived.CellSize);
+        var left = Math.Max(minX - dilation, 0);
+        var top = Math.Max(minY - dilation, 0);
+        var right = Math.Min(maxX + dilation + 1, _gridWidth);
+        var bottom = Math.Min(maxY + dilation + 1, _gridHeight);
+        return new CellRect(left, top, right - left, bottom - top);
     }
 
     private void BuildBoundsPrefix()
@@ -389,6 +408,8 @@ internal sealed class InkDispersionPipeline : IDisposable
     }
 
     internal readonly record struct PixelRect(int X, int Y, int Width, int Height);
+
+    internal readonly record struct CellRect(int X, int Y, int Width, int Height);
 
     private readonly record struct StructureKey(
         int MaskHashSum,

@@ -46,6 +46,10 @@ internal static class InkDispersionSettings
     public const int ScratchLength = 8;
     public const int ScratchWetCount = 0;
     public const int ScratchMaxWetStep = 1;
+    public const int ScratchBoundsMinX = 2;
+    public const int ScratchBoundsMinY = 3;
+    public const int ScratchBoundsMaxX = 4;
+    public const int ScratchBoundsMaxY = 5;
     public const int ScratchMaskHashSum = 6;
     public const int ScratchMaskHashMix = 7;
     public const int MaximumPendingSubmissions = 32;

@@ -86,7 +86,7 @@ internal sealed partial class InkDispersionPipelineHost
         _ = _device;
 
         RecordSilhouetteStage(in context, grid, source, 0, 0, width, height, gridWidth, gridHeight, in derived);
-        RecordFlowStage(in context, grid, scratch, inkStep, gridWidth, gridHeight, in derived, in parameters);
+        RecordFlowStage(in context, grid, scratch, inkStep, new InkDispersionPipeline.CellRect(0, 0, gridWidth, gridHeight), gridWidth, gridHeight, in derived, in parameters);
         RecordRenderStage(in context, grid, output, scratch, inkStep, new InkDispersionPipeline.PixelRect(0, 0, width, height), gridWidth, gridHeight, in derived, in parameters);
     }
 
@@ -156,6 +156,7 @@ internal sealed partial class InkDispersionPipelineHost
         [ComputeOwnedResource(nameof(_grid))] InkDispersionGridResources grid,
         [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> scratch,
         [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> inkStep,
+        in InkDispersionPipeline.CellRect region,
         int gridWidth,
         int gridHeight,
         in InkDispersionPipeline.DerivedValues derived,
@@ -163,7 +164,7 @@ internal sealed partial class InkDispersionPipelineHost
     {
         _ = _device;
 
-        RecordFlowStage(in context, grid, scratch, inkStep, gridWidth, gridHeight, in derived, in parameters);
+        RecordFlowStage(in context, grid, scratch, inkStep, region, gridWidth, gridHeight, in derived, in parameters);
     }
 
     [ComputePipeline]
@@ -219,6 +220,7 @@ internal sealed partial class InkDispersionPipelineHost
         InkDispersionGridResources grid,
         ReadWriteBuffer<int> scratch,
         ReadWriteBuffer<int> inkStep,
+        in InkDispersionPipeline.CellRect region,
         int gridWidth,
         int gridHeight,
         in InkDispersionPipeline.DerivedValues derived,
@@ -271,26 +273,26 @@ internal sealed partial class InkDispersionPipelineHost
         var pigmentOut = grid.FlowPigmentB;
         for (var step = 0; step < derived.Steps; step++)
         {
-            context.For(gridWidth, gridHeight, new SupplyShader(
-                distributionsIn, grid.Surface, pigmentIn, grid.DensityA, grid.ReachMask, grid.Deposit, gridWidth, gridHeight));
+            context.For(region.Width, region.Height, new SupplyShader(
+                distributionsIn, grid.Surface, pigmentIn, grid.DensityA, grid.ReachMask, grid.Deposit, region.X, region.Y, gridWidth, gridHeight));
             context.Barrier(distributionsIn);
             context.Barrier(grid.Surface);
             context.Barrier(pigmentIn);
             context.Barrier(grid.DensityA);
-            context.For(gridWidth, gridHeight, new KappaShader(
-                grid.DensityA, grid.FixedPigment, grid.ReachMask, grid.FiberField, grid.AlumField, grid.PinField, grid.Kappa, gridWidth, gridHeight,
+            context.For(region.Width, region.Height, new KappaShader(
+                grid.DensityA, grid.FixedPigment, grid.ReachMask, grid.FiberField, grid.AlumField, grid.PinField, grid.Kappa, region.X, region.Y, gridWidth, gridHeight,
                 derived.Fiber, derived.Sizing, derived.Viscosity, derived.Sigma));
             context.Barrier(grid.Kappa);
-            context.For(gridWidth, gridHeight, new StreamCollideShader(
+            context.For(region.Width, region.Height, new StreamCollideShader(
                 distributionsIn, distributionsOut, grid.Kappa, grid.ReachMask, grid.Deposit, grid.DensityB, grid.Velocity,
-                gridWidth, gridHeight, derived.Omega, derived.SurfaceEvaporation));
+                region.X, region.Y, gridWidth, gridHeight, derived.Omega, derived.SurfaceEvaporation));
             context.Barrier(distributionsOut);
             context.Barrier(grid.DensityB);
             context.Barrier(grid.Velocity);
-            context.For(gridWidth, gridHeight, new PigmentShader(
+            context.For(region.Width, region.Height, new PigmentShader(
                 distributionsOut, grid.DensityA, grid.DensityB, grid.Velocity, pigmentIn, pigmentOut,
                 grid.FixedPigment, grid.Wetness, inkStep, grid.ReachMask, grid.Deposit, grid.FiberField, scratch,
-                gridWidth, gridHeight, step, derived.Fiber, derived.Viscosity));
+                region.X, region.Y, gridWidth, gridHeight, step, derived.Fiber, derived.Viscosity));
             context.Barrier(pigmentOut);
             context.Barrier(grid.FixedPigment);
             context.Barrier(grid.Wetness);
