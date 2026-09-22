@@ -5,8 +5,13 @@
   </Configurations>
   <Project Path="InkDispersion/InkDispersion.csproj">
     <Platform Solution="*|x64" Project="x64" />
+    <BuildDependency Project="InkDispersion.Shader/InkDispersion.Shader.vcxproj" />
   </Project>
   <Project Path="InkDispersion.Tests/InkDispersion.Tests.csproj" />
   <Project Path="InkDispersion.Harness/InkDispersion.Harness.csproj" />
+  <Project Path="InkDispersion.Shader/InkDispersion.Shader.vcxproj">
+    <BuildType Solution="*|*" Project="Release" />
+    <Platform Solution="*|*" Project="Win32" />
+  </Project>
   <Project Path="YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator/YukkuriMovieMaker.Generator.csproj" />
 </Solution>
