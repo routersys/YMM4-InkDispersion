@@ -151,7 +151,23 @@ internal sealed partial class InkDispersionPipelineHost
     }
 
     [ComputePipeline]
-    private void RecordFlow(
+    private void RecordFlowSetup(
+        in ComputeContext context,
+        [ComputeOwnedResource(nameof(_grid))] InkDispersionGridResources grid,
+        [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> scratch,
+        [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> inkStep,
+        int gridWidth,
+        int gridHeight,
+        in InkDispersionPipeline.DerivedValues derived,
+        in InkDispersionPipeline.Parameters parameters)
+    {
+        _ = _device;
+
+        RecordFlowSetupStage(in context, grid, scratch, inkStep, gridWidth, gridHeight, in derived, in parameters);
+    }
+
+    [ComputePipeline]
+    private void RecordFlowSteps(
         in ComputeContext context,
         [ComputeOwnedResource(nameof(_grid))] InkDispersionGridResources grid,
         [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> scratch,
@@ -160,11 +176,26 @@ internal sealed partial class InkDispersionPipelineHost
         int gridWidth,
         int gridHeight,
         in InkDispersionPipeline.DerivedValues derived,
-        in InkDispersionPipeline.Parameters parameters)
+        int firstStep,
+        int stepCount)
     {
         _ = _device;
 
-        RecordFlowStage(in context, grid, scratch, inkStep, region, gridWidth, gridHeight, in derived, in parameters);
+        RecordFlowStepsStage(in context, grid, scratch, inkStep, region, gridWidth, gridHeight, in derived, firstStep, stepCount);
+    }
+
+    [ComputePipeline]
+    private void RecordFlowFinish(
+        in ComputeContext context,
+        [ComputeOwnedResource(nameof(_grid))] InkDispersionGridResources grid,
+        [ComputeResource(ComputeResourceAccess.ReadWrite)] ReadWriteBuffer<int> scratch,
+        int gridWidth,
+        int gridHeight,
+        in InkDispersionPipeline.DerivedValues derived)
+    {
+        _ = _device;
+
+        RecordFlowFinishStage(in context, grid, scratch, gridWidth, gridHeight, in derived);
     }
 
     [ComputePipeline]
@@ -226,6 +257,21 @@ internal sealed partial class InkDispersionPipelineHost
         in InkDispersionPipeline.DerivedValues derived,
         in InkDispersionPipeline.Parameters parameters)
     {
+        RecordFlowSetupStage(in context, grid, scratch, inkStep, gridWidth, gridHeight, in derived, in parameters);
+        RecordFlowStepsStage(in context, grid, scratch, inkStep, region, gridWidth, gridHeight, in derived, 0, derived.Steps);
+        RecordFlowFinishStage(in context, grid, scratch, gridWidth, gridHeight, in derived);
+    }
+
+    private static void RecordFlowSetupStage(
+        in ComputeContext context,
+        InkDispersionGridResources grid,
+        ReadWriteBuffer<int> scratch,
+        ReadWriteBuffer<int> inkStep,
+        int gridWidth,
+        int gridHeight,
+        in InkDispersionPipeline.DerivedValues derived,
+        in InkDispersionPipeline.Parameters parameters)
+    {
         context.For(1, new InitScratchShader(scratch));
         context.Barrier(scratch);
         context.For(gridWidth, gridHeight, new InitFieldShader(
@@ -266,12 +312,26 @@ internal sealed partial class InkDispersionPipelineHost
         context.For(gridWidth, gridHeight, new ReachMaskShader(reading, grid.ReachMask, grid.Kappa, gridWidth, gridHeight, derived.CellSize, derived.ReachPixels));
         context.Barrier(grid.ReachMask);
         context.Barrier(grid.Kappa);
+    }
 
-        var distributionsIn = grid.DistributionsA;
-        var distributionsOut = grid.DistributionsB;
-        var pigmentIn = grid.FlowPigmentA;
-        var pigmentOut = grid.FlowPigmentB;
-        for (var step = 0; step < derived.Steps; step++)
+    private static void RecordFlowStepsStage(
+        in ComputeContext context,
+        InkDispersionGridResources grid,
+        ReadWriteBuffer<int> scratch,
+        ReadWriteBuffer<int> inkStep,
+        in InkDispersionPipeline.CellRect region,
+        int gridWidth,
+        int gridHeight,
+        in InkDispersionPipeline.DerivedValues derived,
+        int firstStep,
+        int stepCount)
+    {
+        var swapped = (firstStep & 1) != 0;
+        var distributionsIn = swapped ? grid.DistributionsB : grid.DistributionsA;
+        var distributionsOut = swapped ? grid.DistributionsA : grid.DistributionsB;
+        var pigmentIn = swapped ? grid.FlowPigmentB : grid.FlowPigmentA;
+        var pigmentOut = swapped ? grid.FlowPigmentA : grid.FlowPigmentB;
+        for (var step = firstStep; step < firstStep + stepCount; step++)
         {
             context.For(region.Width, region.Height, new SupplyShader(
                 distributionsIn, grid.Surface, pigmentIn, grid.DensityA, grid.ReachMask, grid.Deposit, region.X, region.Y, gridWidth, gridHeight));
@@ -300,6 +360,17 @@ internal sealed partial class InkDispersionPipelineHost
             (distributionsIn, distributionsOut) = (distributionsOut, distributionsIn);
             (pigmentIn, pigmentOut) = (pigmentOut, pigmentIn);
         }
+    }
+
+    private static void RecordFlowFinishStage(
+        in ComputeContext context,
+        InkDispersionGridResources grid,
+        ReadWriteBuffer<int> scratch,
+        int gridWidth,
+        int gridHeight,
+        in InkDispersionPipeline.DerivedValues derived)
+    {
+        var pigmentIn = (derived.Steps & 1) == 0 ? grid.FlowPigmentA : grid.FlowPigmentB;
         context.For(gridWidth, gridHeight, new FinalFixShader(pigmentIn, grid.FixedPigment, gridWidth, gridHeight));
         context.Barrier(grid.FixedPigment);
         context.Barrier(scratch);

@@ -169,7 +169,13 @@ internal sealed class InkDispersionPipeline : IDisposable
             hashed[InkDispersionSettings.ScratchBoundsMaxX],
             hashed[InkDispersionSettings.ScratchBoundsMaxY],
             in derived);
-        _host.RecordFlow(_scratch, _inkStep!, in region, _gridWidth, _gridHeight, in derived, in parameters).Wait();
+        _ = _host.RecordFlowSetup(_scratch, _inkStep!, _gridWidth, _gridHeight, in derived, in parameters);
+        for (var firstStep = 0; firstStep < derived.Steps; firstStep += InkDispersionSettings.FlowStepsPerSubmission)
+        {
+            var stepCount = Math.Min(InkDispersionSettings.FlowStepsPerSubmission, derived.Steps - firstStep);
+            _ = _host.RecordFlowSteps(_scratch, _inkStep!, in region, _gridWidth, _gridHeight, in derived, firstStep, stepCount);
+        }
+        _host.RecordFlowFinish(_scratch, _gridWidth, _gridHeight, in derived).Wait();
         _scratchReadBack.CopyFrom(_scratch);
         var wetStepReadBack = _inkStepReadBack!;
         wetStepReadBack.CopyFrom(_inkStep!);
