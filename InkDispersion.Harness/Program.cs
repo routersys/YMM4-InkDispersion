@@ -39,6 +39,12 @@ try
         return Structure(structureImage);
     }
 
+    if (arguments.Mode == HarnessMode.Recompute)
+    {
+        var recomputeImage = arguments.Input is { } recomputeInput ? HarnessImage.Load(recomputeInput) : HarnessImage.Synthetic(CanvasWidth, CanvasHeight);
+        return Recompute(recomputeImage);
+    }
+
     var outputDirectory = arguments.OutputDirectory ?? Path.Combine(AppContext.BaseDirectory, "harness-output");
     if (arguments.Mode == HarnessMode.Benchmark)
     {
@@ -224,16 +230,9 @@ static int Structure(HarnessImage image)
         throw new HarnessException("Direct3D 12を利用できません。");
 
     var device = GraphicsDevice.GetDefault();
-    using var sourceTexture = device.AllocateReadWriteTexture2D<Bgra32, Float4>(image.Width, image.Height);
-    var pixels = new Bgra32[image.Width * image.Height];
-    for (var index = 0; index < pixels.Length; index++)
-    {
-        var offset = index * HarnessImage.BytesPerPixel;
-        pixels[index] = new Bgra32(image.Pixels[offset + 2], image.Pixels[offset + 1], image.Pixels[offset], image.Pixels[offset + 3]);
-    }
-    sourceTexture.CopyFrom(pixels);
+    using var sourceTexture = LoadSourceTexture(device, image);
 
-    var parameters = new InkDispersionPipeline.Parameters(InkDispersionQuality.High, 1f, 0.6f, 0.5f, 0.3f, 0.3f, 0.4f, 160f, 0.8f, 0.4f, 0.12f, 0.1f, 0.09f, 7);
+    var parameters = StructureParameters();
     pipeline.Simulate(sourceTexture, image.Width, image.Height, 0, 0, image.Width, image.Height, in parameters);
     pipeline.WaitForCompletion();
     var stopwatch = new Stopwatch();
@@ -322,6 +321,60 @@ static int Structure(HarnessImage image)
     }
 
     return 0;
+}
+
+static int Recompute(HarnessImage image)
+{
+    const int Samples = 24;
+    const int IdleMilliseconds = 500;
+
+    using var pipeline = InkDispersionPipeline.TryCreate();
+    if (pipeline is null)
+        throw new HarnessException("Direct3D 12を利用できません。");
+
+    var device = GraphicsDevice.GetDefault();
+    using var sourceTexture = LoadSourceTexture(device, image);
+
+    var settled = StructureParameters();
+    var alternate = settled with { Seed = settled.Seed + 1 };
+    pipeline.Simulate(sourceTexture, image.Width, image.Height, 0, 0, image.Width, image.Height, in settled);
+    pipeline.WaitForCompletion();
+    pipeline.Simulate(sourceTexture, image.Width, image.Height, 0, 0, image.Width, image.Height, in alternate);
+    pipeline.WaitForCompletion();
+
+    var stopwatch = new Stopwatch();
+    var samples = new List<double>(Samples);
+    for (var sample = 0; sample < Samples; sample++)
+    {
+        Thread.Sleep(IdleMilliseconds);
+        var measured = (sample & 1) == 0 ? settled : alternate;
+        stopwatch.Restart();
+        pipeline.Simulate(sourceTexture, image.Width, image.Height, 0, 0, image.Width, image.Height, in measured);
+        pipeline.WaitForCompletion();
+        stopwatch.Stop();
+        samples.Add(stopwatch.Elapsed.TotalMilliseconds);
+    }
+
+    var sorted = samples.OrderBy(static value => value).ToArray();
+    Console.WriteLine($"structure recompute over {Samples} samples with {IdleMilliseconds} ms idle between (ms)");
+    Console.WriteLine($"  min={sorted[0]:F2}  median={sorted[sorted.Length / 2]:F2}  max={sorted[^1]:F2}");
+    return 0;
+}
+
+static InkDispersionPipeline.Parameters StructureParameters()
+    => new(InkDispersionQuality.High, 1f, 0.6f, 0.5f, 0.3f, 0.3f, 0.4f, 160f, 0.8f, 0.4f, 0.12f, 0.1f, 0.09f, 7);
+
+static ReadWriteTexture2D<Bgra32, Float4> LoadSourceTexture(GraphicsDevice device, HarnessImage image)
+{
+    var sourceTexture = device.AllocateReadWriteTexture2D<Bgra32, Float4>(image.Width, image.Height);
+    var pixels = new Bgra32[image.Width * image.Height];
+    for (var index = 0; index < pixels.Length; index++)
+    {
+        var offset = index * HarnessImage.BytesPerPixel;
+        pixels[index] = new Bgra32(image.Pixels[offset + 2], image.Pixels[offset + 1], image.Pixels[offset], image.Pixels[offset + 3]);
+    }
+    sourceTexture.CopyFrom(pixels);
+    return sourceTexture;
 }
 
 static int Compare(string beforeDirectory, string afterDirectory)

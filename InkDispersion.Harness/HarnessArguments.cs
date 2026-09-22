@@ -11,6 +11,7 @@ internal enum HarnessMode
     Compare,
     Benchmark,
     Structure,
+    Recompute,
 }
 
 internal sealed record HarnessArguments(HarnessMode Mode, string? Input, string? OutputDirectory, string? Before, string? After)
@@ -24,6 +25,7 @@ internal sealed record HarnessArguments(HarnessMode Mode, string? Input, string?
           --compare <前> <後>                        2 つの出力先の PNG を画素ごとに比べます
           --benchmark [--input <画像>]               描画を計測します
           --structure                                構造の再計算がパラメータごとに掛かる時間を内訳で計測します
+          --recompute [--input <画像>]               構造の再計算を休止を挟んで繰り返し計測します
         """;
 
     public static HarnessArguments Parse(string[] arguments)
@@ -53,6 +55,9 @@ internal sealed record HarnessArguments(HarnessMode Mode, string? Input, string?
                     break;
                 case "--structure":
                     mode = Select(mode, HarnessMode.Structure);
+                    break;
+                case "--recompute":
+                    mode = Select(mode, HarnessMode.Recompute);
                     break;
                 case "--input":
                     if (index + 1 >= arguments.Length)
