@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Numerics;
 using ComputeWeave;
 using Vortice.Direct2D1;
@@ -303,9 +304,13 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
             _resourceSet = InkDispersionResourceSet.Create(interopDevice, _interopDomain);
             _pipeline = InkDispersionPipeline.TryCreate(interopDevice);
         }
-        catch (Exception exception)
+        catch (Win32Exception)
         {
-            InkDispersionTelemetry.Report(exception);
+            ReleaseInterop();
+            return null;
+        }
+        catch
+        {
             ReleaseInterop();
             throw;
         }
@@ -353,9 +358,8 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
             disposer.Collect(output);
             return output;
         }
-        catch (Exception exception)
+        catch
         {
-            InkDispersionTelemetry.Report(exception);
             output?.Dispose();
             outputTransformOutput?.Dispose();
             outputTransform?.Dispose();
@@ -369,16 +373,9 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
 
     protected override void setInput(ID2D1Image? inputImage)
     {
-        _effect?.SetInput(0, inputImage, true);
-        if (!_hasOutput)
-            _effect?.SetInput(1, inputImage, true);
-    }
-
-    protected override void ClearEffectChain()
-    {
         try
         {
-            ClearEffectChainCore();
+            SetInputCore(inputImage);
         }
         catch (Exception exception)
         {
@@ -387,7 +384,14 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
         }
     }
 
-    private void ClearEffectChainCore()
+    private void SetInputCore(ID2D1Image? inputImage)
+    {
+        _effect?.SetInput(0, inputImage, true);
+        if (!_hasOutput)
+            _effect?.SetInput(1, inputImage, true);
+    }
+
+    protected override void ClearEffectChain()
     {
         _effect?.SetInput(0, null, true);
         _effect?.SetInput(1, null, true);
@@ -408,6 +412,11 @@ internal sealed class InkDispersionEffectProcessor : VideoEffectProcessorBase
                 ClearEffectChain();
                 ReleaseInterop();
             }
+        }
+        catch (Exception exception)
+        {
+            InkDispersionTelemetry.Report(exception);
+            throw;
         }
         finally
         {

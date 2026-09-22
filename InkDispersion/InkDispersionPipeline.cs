@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using ComputeWeave;
 
@@ -56,13 +57,18 @@ internal sealed class InkDispersionPipeline : IDisposable
         try
         {
             host = InkDispersionPipelineHost.Create(device, InkDispersionSettings.MaximumPendingSubmissions);
-            return new InkDispersionPipeline(device, host);
+            var pipeline = new InkDispersionPipeline(device, host);
+            host = null;
+            return pipeline;
         }
-        catch
+        catch (Win32Exception)
+        {
+            return null;
+        }
+        finally
         {
             host?.Dispose();
             host?.WaitForDisposal();
-            return null;
         }
     }
 
