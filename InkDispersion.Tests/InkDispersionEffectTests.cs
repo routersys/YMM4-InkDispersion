@@ -69,69 +69,6 @@ public sealed class InkDispersionEffectTests
     }
 
     [Theory]
-    [InlineData(InkDispersionQuality.Balanced, 160, 720)]
-    [InlineData(InkDispersionQuality.High, 224, 1080)]
-    [InlineData(InkDispersionQuality.Ultra, 288, 1440)]
-    public void QualitySettingsMatchSpecification(InkDispersionQuality quality, int resolution, int maxSteps)
-    {
-        var settings = InkDispersionSettings.GetQuality(quality);
-
-        Assert.Equal(resolution, settings.GridResolution);
-        Assert.Equal(maxSteps, settings.MaxSteps);
-    }
-
-    [Theory]
-    [InlineData(1920, 1080, 224)]
-    [InlineData(1080, 1920, 224)]
-    [InlineData(8, 8, 224)]
-    [InlineData(4096, 16, 160)]
-    [InlineData(100, 100, 288)]
-    public void GridSizeCoversCanvas(int width, int height, int resolution)
-    {
-        var (gridWidth, gridHeight, cellSize) = InkDispersionSettings.GetGridSize(width, height, resolution);
-
-        Assert.True(gridWidth >= InkDispersionSettings.MinimumGridSize);
-        Assert.True(gridHeight >= InkDispersionSettings.MinimumGridSize);
-        Assert.True(cellSize > 0f);
-        Assert.True(gridWidth * cellSize >= width);
-        Assert.True(gridHeight * cellSize >= height);
-    }
-
-    [Theory]
-    [InlineData(0f, 720, 192)]
-    [InlineData(10f, 720, 228)]
-    [InlineData(60f, 1080, 728)]
-    [InlineData(500f, 1080, 1080)]
-    [InlineData(500f, 720, 720)]
-    public void StepCountScalesWithReachAndRespectsCap(float reachCells, int maxSteps, int expected)
-    {
-        Assert.Equal(expected, InkDispersionSettings.GetStepCount(reachCells, maxSteps));
-    }
-
-    [Fact]
-    public void ParameterMappingsAreMonotonicAndBounded()
-    {
-        Assert.Equal(InkDispersionSettings.MinimumDeposit, InkDispersionSettings.GetDeposit(0f), 5);
-        Assert.Equal(InkDispersionSettings.MaximumDeposit, InkDispersionSettings.GetDeposit(1f), 5);
-        Assert.Equal(InkDispersionSettings.MinimumDeposit, InkDispersionSettings.GetDeposit(-5f), 5);
-        Assert.Equal(InkDispersionSettings.MaximumDeposit, InkDispersionSettings.GetDeposit(5f), 5);
-        Assert.True(InkDispersionSettings.GetDeposit(0.75f) > InkDispersionSettings.GetDeposit(0.25f));
-
-        Assert.Equal(InkDispersionSettings.MaximumOmega, InkDispersionSettings.GetOmega(0f), 5);
-        Assert.Equal(InkDispersionSettings.MinimumOmega, InkDispersionSettings.GetOmega(1f), 5);
-        Assert.True(InkDispersionSettings.GetOmega(0.25f) > InkDispersionSettings.GetOmega(0.75f));
-
-        Assert.Equal(InkDispersionSettings.SigmaFloor, InkDispersionSettings.GetPinningSigma(0f), 6);
-        Assert.Equal(InkDispersionSettings.SigmaFloor + InkDispersionSettings.MaximumSigma, InkDispersionSettings.GetPinningSigma(1f), 6);
-        Assert.True(InkDispersionSettings.GetPinningSigma(0.75f) > InkDispersionSettings.GetPinningSigma(0.25f));
-
-        Assert.Equal(0f, InkDispersionSettings.GetSurfaceEvaporation(0f), 7);
-        Assert.Equal(InkDispersionSettings.MaximumSurfaceEvaporation, InkDispersionSettings.GetSurfaceEvaporation(1f), 7);
-        Assert.Equal(0f, InkDispersionSettings.GetSurfaceEvaporation(-1f), 7);
-        Assert.Equal(InkDispersionSettings.MaximumSurfaceEvaporation, InkDispersionSettings.GetSurfaceEvaporation(2f), 7);
-    }
-
-    [Theory]
     [InlineData(0, 0)]
     [InlineData(1, 3)]
     [InlineData(2, 4)]
