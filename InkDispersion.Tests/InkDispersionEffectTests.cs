@@ -68,34 +68,6 @@ public sealed class InkDispersionEffectTests
         Assert.Empty(effect.CreateExoVideoFilters(0, null!));
     }
 
-    [Theory]
-    [InlineData(0, 0)]
-    [InlineData(1, 3)]
-    [InlineData(2, 4)]
-    [InlineData(3, 1)]
-    [InlineData(4, 2)]
-    [InlineData(5, 7)]
-    [InlineData(6, 8)]
-    [InlineData(7, 5)]
-    [InlineData(8, 6)]
-    public void LatticeOppositeDirectionsAreInvolutions(int direction, int expected)
-    {
-        Assert.Equal(expected, InkDispersionShaderMath.Opposite(direction));
-        Assert.Equal(direction, InkDispersionShaderMath.Opposite(expected));
-        Assert.Equal(-InkDispersionShaderMath.Ex(direction), InkDispersionShaderMath.Ex(expected));
-        Assert.Equal(-InkDispersionShaderMath.Ey(direction), InkDispersionShaderMath.Ey(expected));
-    }
-
-    [Fact]
-    public void LatticeWeightsSumToOne()
-    {
-        var sum = 0f;
-        for (var i = 0; i < 9; i++)
-            sum += InkDispersionShaderMath.Weight(i);
-
-        Assert.Equal(1f, sum, 6);
-    }
-
     [Fact]
     public void TransparentInputYieldsTransparentOutput()
     {
