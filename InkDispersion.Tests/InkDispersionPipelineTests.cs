@@ -238,13 +238,14 @@ public sealed class InkDispersionPipelineTests
     }
 
     [Theory]
-    [InlineData(0.3f)]
-    [InlineData(1f)]
-    public void TheVisibleBoundsHoldEveryInkedPixelAndRenderTheSameInk(float spread)
+    [InlineData(0.3f, 0.6f, 32f)]
+    [InlineData(1f, 0.6f, 32f)]
+    [InlineData(1f, 1f, 12f)]
+    public void TheVisibleBoundsHoldEveryInkedPixelAndRenderTheSameInk(float spread, float water, float reachPixels)
     {
         using var pipeline = CreatePipeline();
         var source = Square(192, 192, 80, 80, 32, 24);
-        var parameters = Parameters(spread: spread, reachPixels: 32f, seed: 5);
+        var parameters = Parameters(spread: spread, water: water, reachPixels: reachPixels, seed: 5);
         var full = Render(pipeline, source, 192, 192, parameters);
         var device = GraphicsDevice.GetDefault();
         using var sourceTexture = device.AllocateReadWriteTexture2D<Bgra32, Float4>(192, 192);
