@@ -346,6 +346,21 @@ public sealed class InkDispersionPipelineTests
     }
 
     [Fact]
+    public void APipelineUsedAtAnotherSizeDrawsLikeAFreshOne()
+    {
+        using var pipeline = CreatePipeline();
+        using var fresh = CreatePipeline();
+        var parameters = Parameters(seed: 7);
+        Render(pipeline, Square(128, 64, 48, 16, 32, 32), 128, 64, parameters);
+        var source = Square(64, 64, 16, 16, 32, 32);
+
+        var reused = Render(pipeline, source, 64, 64, parameters);
+        var expected = Render(fresh, source, 64, 64, parameters);
+
+        Assert.Equal(expected, reused);
+    }
+
+    [Fact]
     public void TheFlowIsSimulatedAgainOnlyWhenTheShapeOrTheFlowSettingsChange()
     {
         using var pipeline = CreatePipeline();
