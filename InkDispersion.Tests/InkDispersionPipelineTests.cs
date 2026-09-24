@@ -8,11 +8,14 @@ public sealed class InkDispersionPipelineTests
 {
     const int Opaque = unchecked((int)0xFFC0C0C0);
 
+    static readonly bool Direct3D12IsAvailable = GraphicsDevice.EnumerateDevices().Any();
+
     static InkDispersionPipeline CreatePipeline()
     {
-        var pipeline = InkDispersionPipeline.TryCreate();
-        if (pipeline is null)
+        if (!Direct3D12IsAvailable)
             Assert.Skip("Direct3D 12 is unavailable.");
+        var pipeline = InkDispersionPipeline.TryCreate();
+        Assert.NotNull(pipeline);
         return pipeline;
     }
 
