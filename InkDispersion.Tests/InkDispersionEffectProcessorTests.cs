@@ -43,6 +43,8 @@ public sealed class InkDispersionEffectProcessorTests
     static bool HasInkOutside(Rendering rendering, SourceImage source)
         => rendering.Coordinates().Any(point => (!source.Contains(point.X, point.Y) || source[point.X, point.Y].Alpha == 0) && rendering[point.X, point.Y].Alpha > 0);
 
+    static bool Tinted(byte channel, byte alpha, byte color) => Math.Abs(channel - color * alpha / 255d) <= 2d;
+
     [Fact]
     public void TheProcessorHandsTheDrawDescriptionBackUnchanged()
     {
@@ -77,6 +79,26 @@ public sealed class InkDispersionEffectProcessorTests
             Assert.InRange(pixel.Blue, 0, pixel.Alpha);
             Assert.InRange(pixel.Green, 0, pixel.Alpha);
             Assert.InRange(pixel.Red, 0, pixel.Alpha);
+        });
+    }
+
+    [Fact]
+    public void TheInkTakesTheChosenColor()
+    {
+        using var devices = new GraphicsDevices();
+        using var context = devices.CreateContext();
+        RequireInterop(context);
+        using var source = new SourceImage(context, Size, Size, CenteredSquare);
+        using var processor = new InkDispersionEffect { InkColor = Color.FromRgb(32, 96, 160) }.CreateVideoEffect(context);
+        processor.SetInput(source.Bitmap);
+
+        var rendering = RenderFrame(context, processor, 0);
+
+        Assert.True(HasInkOutside(rendering, source));
+        Assert.All(rendering.Coordinates().Where(point => !source.Contains(point.X, point.Y) || source[point.X, point.Y].Alpha == 0), point =>
+        {
+            var pixel = rendering[point.X, point.Y];
+            Assert.True(Tinted(pixel.Red, pixel.Alpha, 32) && Tinted(pixel.Green, pixel.Alpha, 96) && Tinted(pixel.Blue, pixel.Alpha, 160), $"({point.X}, {point.Y}) {pixel}");
         });
     }
 
