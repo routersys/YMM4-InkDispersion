@@ -189,6 +189,20 @@ public sealed class InkDispersionEffectProcessorTests
     }
 
     [Fact]
+    public void AnImageThatLeavesNoRoomForTheInkPassesThroughUntouched()
+    {
+        using var devices = new GraphicsDevices();
+        using var context = devices.CreateContext();
+        using var source = SourceImage.Solid(context, InkDispersionSettings.MaximumCanvasSize - 16, 8, Gray);
+        using var processor = new InkDispersionEffect().CreateVideoEffect(context);
+        processor.SetInput(source.Bitmap);
+
+        var rendering = RenderFrame(context, processor, 0);
+
+        AssertSameAsSource(rendering, source);
+    }
+
+    [Fact]
     public void ReturningToAFrameReproducesItExactly()
     {
         using var devices = new GraphicsDevices();
