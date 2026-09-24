@@ -46,6 +46,22 @@ public sealed class InkDispersionPipelineTests
 
     static int LitPixels(int[] pixels) => pixels.Count(pixel => Alpha(pixel) > 8);
 
+    static (int Left, int Top, int Right, int Bottom) InkBounds(int[] pixels, int width)
+    {
+        var (left, top, right, bottom) = (int.MaxValue, int.MaxValue, int.MinValue, int.MinValue);
+        for (var index = 0; index < pixels.Length; index++)
+        {
+            if (Alpha(pixels[index]) == 0)
+                continue;
+            left = Math.Min(left, index % width);
+            top = Math.Min(top, index / width);
+            right = Math.Max(right, index % width + 1);
+            bottom = Math.Max(bottom, index / width + 1);
+        }
+
+        return (left, top, right, bottom);
+    }
+
     static int LowestLitRow(int[] pixels, int width)
     {
         for (var index = pixels.Length - 1; index >= 0; index--)
@@ -271,6 +287,27 @@ public sealed class InkDispersionPipelineTests
                     Assert.Equal(unchecked((uint)full[y * 192 + x]), visible[(y - rect.Y) * rect.Width + x - rect.X].PackedValue);
             }
         }
+    }
+
+    [Fact]
+    public void TheVisibleBoundsHugTheInkOnAFourPixelGrid()
+    {
+        using var pipeline = CreatePipeline();
+        var source = Square(480, 480, 192, 192, 96, 96);
+        var parameters = Parameters(reachPixels: 48f, seed: 5);
+        var ink = InkBounds(Render(pipeline, source, 480, 480, parameters), 480);
+        var device = GraphicsDevice.GetDefault();
+        using var sourceTexture = device.AllocateReadWriteTexture2D<Bgra32, Float4>(480, 480);
+        Upload(sourceTexture, source);
+
+        pipeline.Simulate(sourceTexture, 480, 480, 0, 0, 480, 480, in parameters);
+        Assert.True(pipeline.TryGetVisibleBounds(480, 480, in parameters, out var rect));
+
+        Assert.Equal((0, 0), (rect.X % 4, rect.Y % 4));
+        Assert.InRange(ink.Left - rect.X, 0, 24);
+        Assert.InRange(ink.Top - rect.Y, 0, 24);
+        Assert.InRange(rect.X + rect.Width - ink.Right, 0, 24);
+        Assert.InRange(rect.Y + rect.Height - ink.Bottom, 0, 24);
     }
 
     [Fact]
