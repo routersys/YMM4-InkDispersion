@@ -329,6 +329,22 @@ public sealed class InkDispersionPipelineTests
         Assert.True(narrow.Width * narrow.Height < wide.Width * wide.Height);
     }
 
+    [Theory]
+    [InlineData(false, 1f)]
+    [InlineData(true, 0f)]
+    public void NothingIsVisibleWithoutInkOrSpread(bool shaped, float spread)
+    {
+        using var pipeline = CreatePipeline();
+        var device = GraphicsDevice.GetDefault();
+        using var sourceTexture = device.AllocateReadWriteTexture2D<Bgra32, Float4>(128, 128);
+        Upload(sourceTexture, shaped ? Square(128, 128, 48, 48, 32, 32) : new int[128 * 128]);
+        var parameters = Parameters(spread: spread);
+
+        pipeline.Simulate(sourceTexture, 128, 128, 0, 0, 128, 128, in parameters);
+
+        Assert.False(pipeline.TryGetVisibleBounds(128, 128, in parameters, out _));
+    }
+
     [Fact]
     public void TheFlowIsSimulatedAgainOnlyWhenTheShapeOrTheFlowSettingsChange()
     {
