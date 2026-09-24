@@ -1,6 +1,9 @@
 using System.Globalization;
+using System.Numerics;
 using System.Windows.Media;
 using ComputeWeave;
+using Vortice.Direct2D1;
+using Vortice.Direct2D1.Effects;
 using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Json;
 using YukkuriMovieMaker.Player.Video;
@@ -100,6 +103,35 @@ public sealed class InkDispersionEffectProcessorTests
             var pixel = rendering[point.X, point.Y];
             Assert.True(Tinted(pixel.Red, pixel.Alpha, 32) && Tinted(pixel.Green, pixel.Alpha, 96) && Tinted(pixel.Blue, pixel.Alpha, 160), $"({point.X}, {point.Y}) {pixel}");
         });
+    }
+
+    [Theory]
+    [InlineData(100, 50)]
+    [InlineData(-37, 21)]
+    public void TheInkTravelsWithTheImage(int dx, int dy)
+    {
+        using var devices = new GraphicsDevices();
+        using var context = devices.CreateContext();
+        RequireInterop(context);
+        using var source = new SourceImage(context, Size, Size, CenteredSquare);
+        using var moved = new AffineTransform2D(context.DeviceContext)
+        {
+            InterPolationMode = AffineTransform2DInterpolationMode.NearestNeighbor,
+            BorderMode = BorderMode.Hard,
+            TransformMatrix = Matrix3x2.CreateTranslation(dx, dy),
+        };
+        moved.SetInput(0, source.Bitmap, true);
+        using var movedOutput = moved.Output;
+        using var inPlaceProcessor = new InkDispersionEffect().CreateVideoEffect(context);
+        inPlaceProcessor.SetInput(source.Bitmap);
+        var inPlace = RenderFrame(context, inPlaceProcessor, 0);
+        using var travelledProcessor = new InkDispersionEffect().CreateVideoEffect(context);
+        travelledProcessor.SetInput(movedOutput);
+
+        var travelled = RenderFrame(context, travelledProcessor, 0);
+
+        Assert.Equal((inPlace.Left + dx, inPlace.Top + dy, inPlace.Width, inPlace.Height), (travelled.Left, travelled.Top, travelled.Width, travelled.Height));
+        Assert.All(inPlace.Coordinates(), point => Assert.True(inPlace[point.X, point.Y] == travelled[point.X + dx, point.Y + dy], $"({point.X}, {point.Y})"));
     }
 
     public static readonly TheoryData<string, Action<InkDispersionEffect>> PassThroughSettings = new()
