@@ -48,6 +48,13 @@ public sealed class InkDispersionEffectProcessorTests
 
     static bool Tinted(byte channel, byte alpha, byte color) => Math.Abs(channel - color * alpha / 255d) <= 2d;
 
+    static double DistanceFrom(SourceImage source, int x, int y)
+    {
+        var dx = Math.Max(Math.Max(-x, x - (source.Width - 1)), 0);
+        var dy = Math.Max(Math.Max(-y, y - (source.Height - 1)), 0);
+        return Math.Sqrt(dx * dx + dy * dy);
+    }
+
     [Fact]
     public void TheProcessorHandsTheDrawDescriptionBackUnchanged()
     {
@@ -132,6 +139,29 @@ public sealed class InkDispersionEffectProcessorTests
 
         Assert.Equal((inPlace.Left + dx, inPlace.Top + dy, inPlace.Width, inPlace.Height), (travelled.Left, travelled.Top, travelled.Width, travelled.Height));
         Assert.All(inPlace.Coordinates(), point => Assert.True(inPlace[point.X, point.Y] == travelled[point.X + dx, point.Y + dy], $"({point.X}, {point.Y})"));
+    }
+
+    [Fact]
+    public void TheReachIsMeasuredAgainstTheLongSideOfTheImage()
+    {
+        using var devices = new GraphicsDevices();
+        using var context = devices.CreateContext();
+        RequireInterop(context);
+        using var source = SourceImage.Solid(context, 96, 24, Gray);
+        var effect = new InkDispersionEffect();
+        effect.Water.Values[0].Value = 100d;
+        effect.Reach.Values[0].Value = 25d;
+        using var processor = effect.CreateVideoEffect(context);
+        processor.SetInput(source.Bitmap);
+
+        var rendering = RenderFrame(context, processor, 0);
+
+        var distances = rendering.Coordinates()
+            .Where(point => !source.Contains(point.X, point.Y) && rendering[point.X, point.Y].Alpha > 0)
+            .Select(point => DistanceFrom(source, point.X, point.Y))
+            .ToArray();
+        Assert.Contains(distances, distance => distance > 12d);
+        Assert.All(distances, distance => Assert.True(distance <= 30d, $"{distance}"));
     }
 
     public static readonly TheoryData<string, Action<InkDispersionEffect>> PassThroughSettings = new()
