@@ -32,6 +32,19 @@ public sealed class InkDispersionSettingsTests
     }
 
     [Theory]
+    [InlineData(1920, 1080, 224, 224)]
+    [InlineData(1080, 1920, 224, 224)]
+    [InlineData(8, 8, 224, 8)]
+    [InlineData(4096, 16, 160, 160)]
+    [InlineData(100, 100, 288, 100)]
+    public void TheLongSideIsSplitIntoTheResolutionOrIntoSinglePixels(int width, int height, int resolution, int cells)
+    {
+        var (gridWidth, gridHeight, _) = InkDispersionSettings.GetGridSize(width, height, resolution);
+
+        Assert.InRange(Math.Max(gridWidth, gridHeight), cells + 1, cells + 2);
+    }
+
+    [Theory]
     [InlineData(0f, 720, 192)]
     [InlineData(10f, 720, 228)]
     [InlineData(60f, 1080, 728)]
