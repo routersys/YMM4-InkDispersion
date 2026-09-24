@@ -311,6 +311,25 @@ public sealed class InkDispersionPipelineTests
     }
 
     [Fact]
+    public void ASmallerSpreadNarrowsTheVisibleBounds()
+    {
+        using var pipeline = CreatePipeline();
+        var device = GraphicsDevice.GetDefault();
+        using var sourceTexture = device.AllocateReadWriteTexture2D<Bgra32, Float4>(192, 192);
+        Upload(sourceTexture, Square(192, 192, 80, 80, 32, 32));
+        var full = Parameters(reachPixels: 48f, seed: 5);
+        var partial = full with { Spread = 0.3f };
+
+        pipeline.Simulate(sourceTexture, 192, 192, 0, 0, 192, 192, in full);
+        Assert.True(pipeline.TryGetVisibleBounds(192, 192, in full, out var wide));
+        Assert.True(pipeline.TryGetVisibleBounds(192, 192, in partial, out var narrow));
+
+        Assert.True(narrow.X >= wide.X && narrow.Y >= wide.Y);
+        Assert.True(narrow.X + narrow.Width <= wide.X + wide.Width && narrow.Y + narrow.Height <= wide.Y + wide.Height);
+        Assert.True(narrow.Width * narrow.Height < wide.Width * wide.Height);
+    }
+
+    [Fact]
     public void TheFlowIsSimulatedAgainOnlyWhenTheShapeOrTheFlowSettingsChange()
     {
         using var pipeline = CreatePipeline();
