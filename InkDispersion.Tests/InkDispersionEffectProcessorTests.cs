@@ -243,6 +243,30 @@ public sealed class InkDispersionEffectProcessorTests
         Assert.True(HasInkOutside(end, source));
     }
 
+    [Theory]
+    [InlineData(100d, 30d)]
+    [InlineData(30d, 100d)]
+    public void AProcessorThatDrewAnotherSpreadDrawsLikeAFreshOne(double firstSpread, double secondSpread)
+    {
+        using var devices = new GraphicsDevices();
+        using var context = devices.CreateContext();
+        RequireInterop(context);
+        using var source = new SourceImage(context, Size, Size, CenteredSquare);
+        var effect = new InkDispersionEffect();
+        effect.Spread.Values[0].Value = firstSpread;
+        using var processor = effect.CreateVideoEffect(context);
+        processor.SetInput(source.Bitmap);
+        RenderFrame(context, processor, 0);
+        effect.Spread.Values[0].Value = secondSpread;
+        using var fresh = effect.CreateVideoEffect(context);
+        fresh.SetInput(source.Bitmap);
+        var expected = RenderFrame(context, fresh, 0);
+
+        var reused = RenderFrame(context, processor, 0);
+
+        Assert.True(reused.SamePixelsAs(expected));
+    }
+
     public static readonly TheoryData<string, Action<InkDispersionEffect>> LaterChanges = new()
     {
         { nameof(InkDispersionEffect.Amount), effect => effect.Amount.Values[0].Value = 50d },
