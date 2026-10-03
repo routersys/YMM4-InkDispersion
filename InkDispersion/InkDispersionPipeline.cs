@@ -340,10 +340,10 @@ internal sealed class InkDispersionPipeline : IDisposable
 
     private void EnsureGrid(int gridWidth, int gridHeight)
     {
-        if (_gridWidth == gridWidth && _gridHeight == gridHeight)
-            return;
+        var resized = _gridWidth != gridWidth || _gridHeight != gridHeight;
+        if (resized)
+            DisposeGridBuffers();
 
-        DisposeGridBuffers();
         var gridLength = gridWidth * gridHeight;
         var distributionLength = gridLength * 9;
         if (!_host.TryEnsureGrid(
@@ -366,8 +366,16 @@ internal sealed class InkDispersionPipeline : IDisposable
                     surfaceLength: gridLength,
                     velocityLength: gridLength,
                     wetnessLength: gridLength),
-                out _))
+                out var changed))
             throw new InvalidOperationException();
+
+        if (!resized)
+        {
+            if (changed)
+                _structureKey = null;
+            return;
+        }
+
         _inkStep = _device.AllocateReadWriteBuffer<int>(gridLength);
         _inkStepReadBack = _device.AllocateReadBackBuffer<int>(gridLength);
         _cachedInkStep = new int[gridLength];
